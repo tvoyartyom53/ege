@@ -4,14 +4,14 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>География ЕГЭ | Тренажёр</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
   
-  /* Стили для карт */
-  #map, #map-industries { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
+  /* Карты (Одинаковые для 4 и 9 задания) */
+  #map, #map-industries { height: 100vh; width: 100%; background: #d0d8e0; z-index: 1; }
   #screen-task4-play, #screen-industry-map { overflow: hidden; position: absolute; inset: 0; }
   
   /* Система экранов */
@@ -146,9 +146,10 @@
   </div>
 </div>
 
-<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ -->
+<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ (ИСПРАВЛЕНО) -->
 <div id="screen-industry-map" class="screen">
-  <div id="map-industries" class="absolute inset-0 z-0"></div>
+  <!-- Карта теперь точно такая же, как в 4 задании, без absolute -->
+  <div id="map-industries"></div>
   
   <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
     <button onclick="showScreen('screen-task9-menu')" class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer self-start">← В меню 9 задания</button>
@@ -174,9 +175,9 @@ function showScreen(id) {
   const target = document.getElementById(id);
   if (target) {
     target.classList.add('active');
-    // Если это экран с картой, даем ему время прогрузиться
-    if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 200);
-    if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 200);
+    // Принудительное обновление карт после переключения экрана
+    if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 250);
+    if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 250);
   }
 }
 
@@ -262,7 +263,7 @@ function startMapTopic(region, topicId) {
 
   if (!map) {
     map = L.map('map', { zoomControl: false }).setView(data.center, data.zoom);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
   } else {
     map.setView(data.center, data.zoom);
     map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
@@ -538,7 +539,7 @@ function checkQ9() {
     expBox.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
   }
   expBox.classList.remove('hidden');
-  document.getElementById('q9-btn-next').classList.remove('hidden');
+  document.getElementById('btn-next-q').classList.remove('hidden');
 }
 
 // ============================================================
@@ -630,11 +631,14 @@ function initIndustryMap() {
   showScreen('screen-industry-map');
   
   if (!indMap) {
-    indMap = L.map('map-industries').setView([65, 95], 3);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(indMap);
+    indMap = L.map('map-industries', { zoomControl: false }).setView([65, 95], 3);
+    // Используем тот же сервер карт, что и в 4 задании
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(indMap);
   }
   
-  setTimeout(() => indMap.invalidateSize(), 200);
+  setTimeout(() => indMap.invalidateSize(), 300); // Даем карте время прогрузиться
   
   const select = document.getElementById('industry-select');
   select.innerHTML = '';
