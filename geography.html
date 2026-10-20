@@ -10,25 +10,27 @@
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
   
-  /* Общие стили для карт */
+  /* Стили для карт */
   #map, #map-industries { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
+  #screen-task4-play, #screen-industry-map { overflow: hidden; position: absolute; inset: 0; }
   
   /* Система экранов */
   .screen { display: none; position: absolute; inset: 0; overflow-y: auto; background: #f0f4f8; z-index: 10; }
   .screen.active { display: block; z-index: 20; }
   
-  /* Экраны, где контент по центру (главное меню, меню задания 9) */
+  /* Экраны по центру */
   #screen-main.active, #screen-task9-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 
   /* Карточки меню */
   .menu-card { 
     background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s; border: 2px solid transparent; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; 
     width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box;
   }
+  .menu-card:active { transform: scale(0.98); }
   .menu-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
   
-  /* Стили для квиза (Задание 9) */
+  /* Стили для квиза */
   .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
   .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; }
   .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
@@ -61,7 +63,7 @@
   </div>
 </div>
 
-<!-- ЭКРАН 2: МЕНЮ КАРТ (4 задание) -->
+<!-- ЭКРАН 2: МЕНЮ КАРТ -->
 <div id="screen-task4-menu" class="screen p-4">
   <div class="max-w-3xl mx-auto w-full">
     <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
@@ -73,7 +75,7 @@
   </div>
 </div>
 
-<!-- ЭКРАН 3: ИГРА КАРТЫ (4 задание) -->
+<!-- ЭКРАН 3: КАРТА 4 ЗАДАНИЯ -->
 <div id="screen-task4-play" class="screen">
   <div id="map"></div>
   <button onclick="showScreen('screen-task4-menu')" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer">← К темам</button>
@@ -86,7 +88,7 @@
   </div>
 </div>
 
-<!-- ЭКРАН 4: МЕНЮ ЗАДАНИЯ 9 -->
+<!-- ЭКРАН 4: МЕНЮ 9 ЗАДАНИЯ -->
 <div id="screen-task9-menu" class="screen">
   <div class="w-full max-w-md">
     <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
@@ -146,7 +148,6 @@
 
 <!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ -->
 <div id="screen-industry-map" class="screen">
-  <!-- Карта имеет absolute inset-0, чтобы точно занять весь экран -->
   <div id="map-industries" class="absolute inset-0 z-0"></div>
   
   <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
@@ -159,24 +160,29 @@
       </div>
       
       <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Выберите отрасль</label>
-      <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-        <!-- Опции заполняются через JS -->
-      </select>
+      <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
     </div>
   </div>
 </div>
 
 <script>
 // ============================================================
-//  ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
+//  ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
 // ============================================================
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
-  if (target) target.classList.add('active');
+  if (target) {
+    target.classList.add('active');
+    // Если это экран с картой, даем ему время прогрузиться
+    if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 200);
+    if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 200);
+  }
 }
 
-// === ДАННЫЕ ДЛЯ КАРТ (ЗАДАНИЕ 4) ===
+// ============================================================
+//  ДАННЫЕ КАРТ (ЗАДАНИЕ 4)
+// ============================================================
 const GEO_DATA = {
   russia: {
     center: [65, 95], zoom: 3,
@@ -227,8 +233,7 @@ function getMapIcon(color = 'blue') {
     red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
   };
   return L.icon({
-    iconUrl: colors[color],
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconUrl: colors[color], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
   });
 }
@@ -240,13 +245,9 @@ function switchRegion(region) {
 
   const grid = document.getElementById('map-topics-grid');
   grid.innerHTML = '';
-  const topics = GEO_DATA[region].topics;
-
-  for (const [id, data] of Object.entries(topics)) {
+  for (const [id, data] of Object.entries(GEO_DATA[region].topics)) {
     const card = document.createElement('div');
     card.className = 'bg-white p-4 rounded-xl text-center shadow-sm border border-gray-100 font-semibold text-gray-700 hover:bg-blue-50 transition cursor-pointer';
-    card.style.width = '100%';
-    card.style.display = 'block';
     card.textContent = data.name;
     card.onclick = () => startMapTopic(region, id);
     grid.appendChild(card);
@@ -261,9 +262,7 @@ function startMapTopic(region, topicId) {
 
   if (!map) {
     map = L.map('map', { zoomControl: false }).setView(data.center, data.zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(map);
   } else {
     map.setView(data.center, data.zoom);
     map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
@@ -333,9 +332,8 @@ function handleMapClick(name, marker, items) {
 }
 
 // ============================================================
-//  БАЗА ЗАДАНИЯ 9 (СПРАВОЧНИК И ТРЕНАЖЁР)
+//  БАЗА ЗАДАНИЯ 9
 // ============================================================
-
 const FAKE_RU = ["Курская область", "Смоленская область", "Мурманская область", "Республика Карелия", "Тверская область", "Калининградская область", "Псковская область", "Новгородская область", "Республика Коми", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Тыва", "Тюменская область", "Архангельская область", "Астраханская область", "Оренбургская область", "Курганская область", "Забайкальский край"];
 const FAKE_WORLD = ["Германия", "Франция", "Япония", "Италия", "Испания", "Швеция", "Финляндия", "Швейцария", "Польша", "Чехия", "Великобритания", "Португалия", "Греция", "Норвегия", "Исландия", "Монголия", "Казахстан", "Беларусь", "Украина", "Венгрия"];
 
@@ -383,4 +381,318 @@ const QUIZ_DB = {
     { name: "Добыча природного газа", correct: ["США", "Россия", "Иран", "Канада", "Катар", "Китай", "Австралия", "Норвегия", "Саудовская Аравия", "Алжир", "Нидерланды"] },
     { name: "Добыча угля", correct: ["Китай", "Индия", "США", "Индонезия", "Австралия", "Россия", "ЮАР", "Германия", "Польша", "Казахстан"] },
     { name: "Добыча железной руды", correct: ["Австралия", "Бразилия", "Китай", "Индия", "Россия", "ЮАР", "Украина", "Канада", "США"] },
-    { name: "Производство стали", correct: ["Китай", "
+    { name: "Производство стали", correct: ["Китай", "Индия", "Япония", "США", "Россия", "Южная Корея", "Германия", "Турция", "Бразилия", "Иран"] },
+    { name: "Добыча бокситов (алюминий)", correct: ["Австралия", "Китай", "Бразилия", "Индия", "Индонезия", "Гвинея", "Ямайка", "Россия", "Казахстан", "Суринам"] },
+    { name: "Добыча медных руд", correct: ["Чили", "Перу", "Китай", "ДР Конго", "США", "Австралия", "Замбия", "Россия", "Мексика", "Индонезия"] },
+    { name: "Добыча олова", correct: ["Китай", "Индонезия", "Мьянма", "Перу", "Боливия", "Бразилия", "ДР Конго", "Вьетнам", "Нигерия", "Малайзия"] },
+    { name: "Производство азотных удобрений", correct: ["Китай", "Индия", "США", "Россия", "Канада", "Германия", "Франция", "Египет", "Индонезия", "Пакистан"] },
+    { name: "Производство калийных удобрений", correct: ["Канада", "Россия", "Беларусь", "Китай", "Германия", "Израиль", "Иордания", "Чили", "США", "Великобритания"] },
+    { name: "Производство фосфорных удобрений", correct: ["Китай", "США", "Марокко", "Россия", "Индия", "Бразилия", "Перу", "Вьетнам", "Иордания", "Израиль"] },
+    { name: "Синтетический каучук", correct: ["США", "Япония", "Китай", "Россия", "Индия", "Франция", "Германия", "Бразилия", "Тайвань", "Республика Корея", "Великобритания", "Нидерланды", "Бельгия", "Мексика", "Аргентина", "Перу", "Колумбия", "Венесуэла", "ДР Конго", "Индонезия", "Малайзия"] },
+    { name: "Лесная промышленность", correct: ["Россия", "США", "Канада", "Норвегия", "Швеция", "Финляндия", "Бразилия", "Индонезия", "Китай", "Индия"] },
+    { name: "Льняные ткани", correct: ["Россия", "Беларусь", "Украина", "Китай", "Франция", "Индия", "Польша", "Литва"] },
+    { name: "Хлопчатобумажные ткани", correct: ["Китай", "Индия", "США", "Пакистан", "Бразилия", "Узбекистан"] },
+    { name: "Производство пшеницы", correct: ["Китай", "Индия", "Россия", "США", "Франция", "Канада", "Германия", "Пакистан", "Австралия", "Украина"] },
+    { name: "Производство риса", correct: ["Китай", "Индия", "Индонезия", "Бангладеш", "Вьетнам", "Мьянма", "Таиланд", "Филиппины", "Бразилия", "Япония"] },
+    { name: "Производство кукурузы", correct: ["США", "Китай", "Бразилия", "Аргентина", "Украина", "Индия", "Мексика", "Индонезия", "Франция", "ЮАР"] },
+    { name: "Производство сои", correct: ["Бразилия", "США", "Аргентина", "Китай", "Индия", "Парагвай", "Канада", "Украина", "Россия", "Боливия"] },
+    { name: "Производство сахарного тростника", correct: ["Бразилия", "Индия", "Китай", "Таиланд", "Пакистан", "Мексика", "Колумбия", "Австралия", "Индонезия", "Филиппины"] },
+    { name: "Производство сахарной свеклы", correct: ["Россия", "Франция", "США", "Германия", "Турция", "Польша", "Украина", "Китай", "Великобритания", "Нидерланды"] },
+    { name: "Производство чая", correct: ["Китай", "Индия", "Кения", "Шри-Ланка", "Турция", "Вьетнам", "Индонезия", "Мьянма", "Аргентина", "Япония"] },
+    { name: "Производство кофе", correct: ["Бразилия", "Вьетнам", "Колумбия", "Индонезия", "Эфиопия", "Гондурас", "Индия", "Уганда", "Перу", "Мексика"] },
+    { name: "Производство какао-бобов", correct: ["Кот-д’Ивуар", "Гана", "Индонезия", "Нигерия", "Камерун", "Бразилия", "Эквадор", "Мексика", "Перу", "Доминиканская Республика"] },
+    { name: "Производство хлопка", correct: ["Китай", "Индия", "США", "Бразилия", "Пакистан", "Турция", "Узбекистан", "Австралия", "Аргентина", "Греция"] },
+    { name: "Производство натурального каучука", correct: ["Таиланд", "Индонезия", "Вьетнам", "Индия", "Китай", "Малайзия", "Нигерия", "Шри-Ланка", "Либерия", "Бразилия"] },
+    { name: "Производство картофеля", correct: ["Китай", "Индия", "Россия", "Украина", "США", "Германия", "Польша", "Беларусь", "Нидерланды", "Франция"] },
+    { name: "Производство винограда", correct: ["Китай", "Италия", "США", "Франция", "Испания", "Турция", "Аргентина", "Чили", "Индия", "Иран", "Австралия"] },
+    { name: "Поголовье КРС", correct: ["Бразилия", "Индия", "США", "Китай", "Эфиопия", "Аргентина", "Пакистан", "Мексика", "Судан", "Австралия"] },
+    { name: "Поголовье свиней", correct: ["Китай", "США", "Бразилия", "Испания", "Вьетнам", "Германия", "Россия", "Мексика", "Мьянма", "Индия"] },
+    { name: "Поголовье овец", correct: ["Китай", "Индия", "Австралия", "Иран", "Нигерия", "Судан", "Великобритания", "ЮАР", "Турция", "Пакистан"] },
+    { name: "Поголовье коз", correct: ["Китай", "Индия", "Пакистан", "Нигерия", "Бангладеш", "Иран", "Судан", "Кения", "Индонезия", "Танзания"] },
+    { name: "Рыболовство", correct: ["Китай", "Перу", "Индонезия", "Индия", "Россия", "США", "Вьетнам", "Япония", "Норвегия", "Филиппины"] },
+    { name: "Производство морских судов", correct: ["Китай", "Республика Корея", "Япония", "Норвегия"] },
+    { name: "Производство автомобилей", correct: ["Китай", "США", "Япония", "Германия", "Индия"] }
+  ]
+};
+
+function getDistractors(region, correctList) {
+  const pool = region === 'russia' ? [...FAKE_RU] : [...FAKE_WORLD];
+  pool.sort(() => Math.random() - 0.5);
+  return pool.filter(item => !correctList.includes(item)).slice(0, 3);
+}
+
+let currentQuizRegion = 'russia';
+let currentIndustry = null;
+let currentOptions = [];
+let selectedOpts = new Set();
+let correctAnswerIndices = new Set();
+let q9Answered = false;
+
+function openRefMenu() {
+  showScreen('screen-task9-ref');
+  switchRefTab('russia');
+}
+
+function switchRefTab(region) {
+  document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  
+  const container = document.getElementById('ref-content');
+  container.innerHTML = '';
+  
+  QUIZ_DB[region].forEach(item => {
+    container.innerHTML += `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-800">${item.name}</div>
+        <div class="p-4 text-sm text-gray-700">${item.correct.join(', ')}</div>
+      </div>`;
+  });
+}
+
+function startQuizMenu() {
+  showScreen('screen-task9-play');
+  startQuiz('russia');
+}
+
+function startQuiz(region) {
+  currentQuizRegion = region;
+  document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  nextQ9();
+}
+
+function nextQ9() {
+  document.getElementById('q9-btn-next').classList.add('hidden');
+  document.getElementById('q9-explanation').classList.add('hidden');
+  
+  const pool = QUIZ_DB[currentQuizRegion];
+  currentIndustry = pool[Math.floor(Math.random() * pool.length)];
+  
+  const correctPool = [...currentIndustry.correct];
+  const chosenCorrect = [];
+  while(chosenCorrect.length < 3 && correctPool.length > 0) {
+    const idx = Math.floor(Math.random() * correctPool.length);
+    chosenCorrect.push(correctPool.splice(idx, 1)[0]);
+  }
+  
+  const chosenDist = getDistractors(currentQuizRegion, currentIndustry.correct);
+  currentOptions = [...chosenCorrect, ...chosenDist].sort(() => Math.random() - 0.5);
+  
+  correctAnswerIndices = new Set();
+  currentOptions.forEach((opt, i) => {
+    if (chosenCorrect.includes(opt)) correctAnswerIndices.add(i);
+  });
+  
+  selectedOpts.clear();
+  q9Answered = false;
+  
+  document.getElementById('q9-industry').textContent = currentIndustry.name;
+  const optContainer = document.getElementById('q9-options');
+  optContainer.innerHTML = '';
+  
+  currentOptions.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer';
+    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
+    btn.onclick = () => toggleQ9Option(idx, btn);
+    optContainer.appendChild(btn);
+  });
+}
+
+function toggleQ9Option(idx, btn) {
+  if (q9Answered) return;
+  if (selectedOpts.has(idx)) {
+    selectedOpts.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    if (selectedOpts.size < 3) {
+      selectedOpts.add(idx);
+      btn.classList.add('selected');
+    }
+  }
+  if (selectedOpts.size === 3) checkQ9();
+}
+
+function checkQ9() {
+  q9Answered = true;
+  let isAllCorrect = true;
+  
+  document.querySelectorAll('#q9-options .option-btn').forEach((btn, idx) => {
+    btn.disabled = true;
+    if (correctAnswerIndices.has(idx)) {
+      btn.classList.add('correct');
+      btn.classList.remove('selected');
+    } else if (selectedOpts.has(idx)) {
+      btn.classList.add('wrong');
+      btn.classList.remove('selected');
+      isAllCorrect = false;
+    }
+  });
+  
+  const expBox = document.getElementById('q9-explanation');
+  if (isAllCorrect) {
+    expBox.innerHTML = `<strong>Отлично!</strong> Это действительно главные центры отрасли: ${currentIndustry.name}.`;
+    expBox.className = 'mt-5 p-3 bg-green-50 text-green-800 text-sm rounded-lg border border-green-200';
+  } else {
+    expBox.innerHTML = `<strong>Есть ошибки.</strong> Правильные ответы подсвечены зелёным. Запомни их!`;
+    expBox.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
+  }
+  expBox.classList.remove('hidden');
+  document.getElementById('q9-btn-next').classList.remove('hidden');
+}
+
+// ============================================================
+//  КАРТА ОТРАСЛЕЙ (ЗОНЫ)
+// ============================================================
+const INDUSTRY_ZONES = {
+  russia: {
+    "Нефтяная промышленность": [{ name: "Западная Сибирь", lat: 61, lng: 72, r: 350000 }, { name: "Волго-Урал", lat: 54, lng: 52, r: 250000 }, { name: "Тимано-Печора", lat: 66, lng: 55, r: 200000 }],
+    "Газовая промышленность": [{ name: "Ямал", lat: 70, lng: 72, r: 300000 }, { name: "Оренбург/Астрахань", lat: 48, lng: 52, r: 200000 }, { name: "Сахалин", lat: 52, lng: 143, r: 150000 }, { name: "Коми", lat: 64, lng: 55, r: 200000 }],
+    "Угольная промышленность": [{ name: "Кузбасс", lat: 55, lng: 86, r: 200000 }, { name: "Печорский бассейн", lat: 67, lng: 60, r: 150000 }, { name: "Южная Якутия", lat: 58, lng: 125, r: 200000 }, { name: "Канско-Ачинский", lat: 56, lng: 92, r: 150000 }],
+    "Крупные ГЭС": [{ name: "Ангара (Иркутск)", lat: 55, lng: 103, r: 150000 }, { name: "Енисей (Красноярск)", lat: 55, lng: 92, r: 150000 }, { name: "Волга (Волгоград)", lat: 48, lng: 44, r: 150000 }],
+    "АЭС": [{ name: "Кольская", lat: 67, lng: 32, r: 100000 }, { name: "Ленинградская", lat: 59, lng: 29, r: 100000 }, { name: "Смоленская", lat: 54, lng: 34, r: 100000 }, { name: "Курская", lat: 51, lng: 35, r: 100000 }, { name: "Балаковская (Саратов)", lat: 52, lng: 47, r: 100000 }, { name: "Ростовская", lat: 47, lng: 42, r: 100000 }],
+    "Крупные ТЭС": [{ name: "Сургутская", lat: 61, lng: 73, r: 100000 }, { name: "Костромская", lat: 58, lng: 41, r: 100000 }, { name: "Рефтинская", lat: 57, lng: 61, r: 100000 }],
+    "Чёрная металлургия (полный цикл)": [{ name: "Урал", lat: 56, lng: 60, r: 200000 }, { name: "Череповец", lat: 59, lng: 38, r: 100000 }, { name: "Липецк", lat: 52, lng: 39, r: 100000 }, { name: "Кузбасс", lat: 54, lng: 87, r: 100000 }],
+    "Алюминиевая промышленность": [{ name: "Красноярск", lat: 58, lng: 92, r: 150000 }, { name: "Иркутск (Братск)", lat: 56, lng: 101, r: 200000 }, { name: "Хакасия (Саяногорск)", lat: 53, lng: 91, r: 100000 }, { name: "Мурманск (Кандалакша)", lat: 67, lng: 32, r: 100000 }],
+    "Медная промышленность": [{ name: "Норильск", lat: 69, lng: 88, r: 150000 }, { name: "Урал", lat: 57, lng: 60, r: 150000 }],
+    "Никелевая промышленность": [{ name: "Норильск", lat: 69, lng: 88, r: 150000 }, { name: "Мурманск", lat: 68, lng: 33, r: 100000 }, { name: "Оренбург (Орск)", lat: 51, lng: 58, r: 100000 }],
+    "Тяжёлое машиностроение": [{ name: "Урал (Екатеринбург)", lat: 56, lng: 60, r: 150000 }, { name: "Курган", lat: 55, lng: 65, r: 100000 }, { name: "Кемерово", lat: 55, lng: 86, r: 100000 }],
+    "Ж/д машиностроение": [{ name: "Брянск", lat: 53, lng: 34, r: 100000 }, { name: "Тверь", lat: 56, lng: 35, r: 100000 }],
+    "Автомобилестроение": [{ name: "Поволжье (Тольятти, НН)", lat: 55, lng: 48, r: 200000 }, { name: "Калуга", lat: 54, lng: 36, r: 100000 }, { name: "Санкт-Петербург", lat: 59, lng: 30, r: 100000 }],
+    "Судостроение": [{ name: "Санкт-Петербург", lat: 59, lng: 30, r: 100000 }, { name: "Архангельск", lat: 64, lng: 40, r: 150000 }, { name: "Нижний Новгород", lat: 56, lng: 44, r: 100000 }],
+    "Сельскохозяйственное машиностроение": [{ name: "Ростов-на-Дону", lat: 47, lng: 39, r: 100000 }, { name: "Красноярск", lat: 56, lng: 92, r: 100000 }],
+    "Калийные удобрения": [{ name: "Пермь (Соликамск)", lat: 59, lng: 56, r: 100000 }],
+    "Фосфорные удобрения": [{ name: "Череповец", lat: 59, lng: 38, r: 100000 }, { name: "Воскресенск (МО)", lat: 55, lng: 38, r: 100000 }],
+    "Азотные удобрения": [{ name: "Новгород", lat: 58, lng: 31, r: 100000 }, { name: "Липецк", lat: 52, lng: 39, r: 100000 }, { name: "Кемерово", lat: 55, lng: 86, r: 100000 }],
+    "Синтетический каучук": [{ name: "Нижнекамск", lat: 55, lng: 51, r: 100000 }, { name: "Самара", lat: 53, lng: 50, r: 100000 }, { name: "Воронеж", lat: 51, lng: 39, r: 100000 }, { name: "Омск", lat: 54, lng: 73, r: 100000 }],
+    "Шинное производство": [{ name: "Московская обл.", lat: 55, lng: 38, r: 100000 }, { name: "Ленинградская обл.", lat: 59, lng: 30, r: 100000 }, { name: "Омск", lat: 54, lng: 73, r: 100000 }],
+    "Химия органического синтеза": [{ name: "Тверь/Ярославль", lat: 57, lng: 38, r: 150000 }, { name: "Воронеж/Курск", lat: 51, lng: 38, r: 150000 }, { name: "Поволжье", lat: 54, lng: 50, r: 150000 }, { name: "Омск/Томск/Кемерово", lat: 55, lng: 82, r: 200000 }],
+    "Серная кислота": [{ name: "Челябинск", lat: 55, lng: 61, r: 100000 }, { name: "Дзержинск", lat: 56, lng: 43, r: 100000 }],
+    "Лесозаготовка": [{ name: "Архангельск", lat: 64, lng: 40, r: 200000 }, { name: "Иркутск/Красноярск", lat: 57, lng: 98, r: 250000 }, { name: "Коми/Карелия", lat: 64, lng: 45, r: 200000 }],
+    "Целлюлозно-бумажная (ЦБК)": [{ name: "Карелия (Сегежа)", lat: 63, lng: 34, r: 100000 }, { name: "Архангельск (Котлас)", lat: 61, lng: 46, r: 100000 }, { name: "Иркутск (Братск)", lat: 56, lng: 101, r: 100000 }],
+    "Производство пшеницы": [{ name: "Северный Кавказ", lat: 45, lng: 40, r: 250000 }, { name: "Западная Сибирь", lat: 53, lng: 78, r: 300000 }, { name: "Центральное Черноземье", lat: 51, lng: 38, r: 200000 }],
+    "Производство кукурузы": [{ name: "Краснодар/Ставрополь", lat: 45, lng: 41, r: 200000 }, { name: "Воронеж/Белгород", lat: 51, lng: 38, r: 150000 }],
+    "Производство риса": [{ name: "Краснодар", lat: 45, lng: 39, r: 100000 }, { name: "Астрахань/Дагестан", lat: 46, lng: 47, r: 150000 }, { name: "Приморье", lat: 44, lng: 132, r: 100000 }],
+    "Производство подсолнечника": [{ name: "Поволжье", lat: 51, lng: 46, r: 200000 }, { name: "Северный Кавказ", lat: 45, lng: 40, r: 200000 }, { name: "Центральное Черноземье", lat: 51, lng: 38, r: 150000 }],
+    "Производство сахарной свёклы": [{ name: "Краснодарский край", lat: 45, lng: 39, r: 150000 }, { name: "Воронеж/Курск/Белгород", lat: 51, lng: 37, r: 200000 }, { name: "Татарстан/Башкортостан", lat: 55, lng: 52, r: 200000 }],
+    "Производство сои": [{ name: "Амурская область", lat: 50, lng: 127, r: 200000 }, { name: "Краснодарский край", lat: 45, lng: 39, r: 150000 }],
+    "Производство картофеля": [{ name: "Центральная Россия", lat: 54, lng: 37, r: 250000 }, { name: "Брянск/Тула", lat: 53, lng: 36, r: 150000 }, { name: "Татарстан/Башкортостан", lat: 55, lng: 53, r: 200000 }],
+    "Производство овощей": [{ name: "Астрахань/Волгоград", lat: 47, lng: 45, r: 150000 }, { name: "Московская область", lat: 55, lng: 38, r: 150000 }],
+    "Садоводство": [{ name: "Северный Кавказ", lat: 45, lng: 40, r: 200000 }, { name: "Центральное Черноземье", lat: 51, lng: 39, r: 150000 }],
+    "Овцеводство": [{ name: "Дагестан/Калмыкия", lat: 45, lng: 45, r: 200000 }, { name: "Ставрополь", lat: 45, lng: 42, r: 150000 }, { name: "Забайкалье/Бурятия", lat: 52, lng: 108, r: 200000 }],
+    "Свиноводство": [{ name: "Белгород/Курск/Воронеж", lat: 51, lng: 37, r: 150000 }, { name: "Московская область", lat: 55, lng: 38, r: 150000 }, { name: "Татарстан/Марий Эл", lat: 56, lng: 49, r: 150000 }],
+    "Молочное скотоводство (КРС)": [{ name: "Вологодская/Кировская", lat: 59, lng: 45, r: 200000 }, { name: "Московская/Ленинградская", lat: 57, lng: 35, r: 150000 }, { name: "Свердловская", lat: 57, lng: 61, r: 150000 }]
+  },
+  world: {
+    "Добыча нефти": [{ name: "Ближний Восток", lat: 25, lng: 45, r: 1200000 }, { name: "Северная Америка", lat: 40, lng: -100, r: 1500000 }, { name: "Венесуэла", lat: 8, lng: -65, r: 500000 }, { name: "Западная Сибирь (РФ)", lat: 61, lng: 72, r: 1500000 }],
+    "Добыча природного газа": [{ name: "Ближний Восток", lat: 27, lng: 50, r: 1000000 }, { name: "Северная Америка", lat: 45, lng: -100, r: 1500000 }, { name: "Западная Сибирь (РФ)", lat: 65, lng: 75, r: 1500000 }],
+    "Добыча угля": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 80, r: 800000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }, { name: "Австралия", lat: -25, lng: 135, r: 800000 }],
+    "Добыча железной руды": [{ name: "Австралия", lat: -25, lng: 118, r: 800000 }, { name: "Бразилия", lat: -18, lng: -45, r: 800000 }, { name: "Китай", lat: 40, lng: 115, r: 800000 }],
+    "Производство стали": [{ name: "Китай", lat: 35, lng: 110, r: 1200000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }],
+    "Добыча бокситов (алюминий)": [{ name: "Австралия", lat: -20, lng: 135, r: 800000 }, { name: "Гвинея", lat: 10, lng: -10, r: 500000 }, { name: "Бразилия", lat: -10, lng: -50, r: 800000 }],
+    "Добыча медных руд": [{ name: "Чили", lat: -30, lng: -70, r: 500000 }, { name: "Перу", lat: -10, lng: -75, r: 500000 }, { name: "ДР Конго", lat: -5, lng: 25, r: 600000 }],
+    "Добыча олова": [{ name: "Китай", lat: 25, lng: 105, r: 500000 }, { name: "Индонезия", lat: -2, lng: 115, r: 500000 }],
+    "Производство азотных удобрений": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }],
+    "Производство калийных удобрений": [{ name: "Канада", lat: 55, lng: -105, r: 1000000 }, { name: "Россия", lat: 60, lng: 55, r: 1000000 }, { name: "Беларусь", lat: 53, lng: 28, r: 400000 }],
+    "Производство фосфорных удобрений": [{ name: "Китай", lat: 30, lng: 110, r: 1000000 }, { name: "США", lat: 30, lng: -85, r: 800000 }, { name: "Марокко", lat: 30, lng: -5, r: 500000 }],
+    "Синтетический каучук": [{ name: "США", lat: 40, lng: -90, r: 1000000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }, { name: "Китай", lat: 35, lng: 110, r: 1000000 }],
+    "Лесная промышленность": [{ name: "Россия", lat: 60, lng: 90, r: 1500000 }, { name: "Канада", lat: 55, lng: -105, r: 1200000 }, { name: "Бразилия", lat: -5, lng: -55, r: 1000000 }],
+    "Льняные ткани": [{ name: "Россия", lat: 55, lng: 40, r: 800000 }, { name: "Китай", lat: 35, lng: 110, r: 1000000 }],
+    "Хлопчатобумажные ткани": [{ name: "Китай", lat: 30, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Пакистан", lat: 30, lng: 70, r: 500000 }],
+    "Производство пшеницы": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 25, lng: 75, r: 1000000 }, { name: "Северная Америка", lat: 45, lng: -100, r: 1500000 }, { name: "Россия/Украина", lat: 50, lng: 40, r: 1000000 }],
+    "Производство риса": [{ name: "Китай", lat: 30, lng: 110, r: 800000 }, { name: "Индия", lat: 20, lng: 78, r: 800000 }, { name: "Индонезия", lat: -2, lng: 115, r: 800000 }],
+    "Производство кукурузы": [{ name: "США", lat: 42, lng: -95, r: 1200000 }, { name: "Китай", lat: 38, lng: 108, r: 1000000 }, { name: "Бразилия", lat: -15, lng: -50, r: 800000 }],
+    "Производство сои": [{ name: "США", lat: 40, lng: -95, r: 1000000 }, { name: "Бразилия", lat: -15, lng: -50, r: 1200000 }, { name: "Аргентина", lat: -35, lng: -60, r: 800000 }],
+    "Производство сахарного тростника": [{ name: "Бразилия", lat: -10, lng: -50, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Китай", lat: 25, lng: 110, r: 800000 }],
+    "Производство сахарной свеклы": [{ name: "Россия/Украина", lat: 50, lng: 35, r: 800000 }, { name: "Франция", lat: 47, lng: 2, r: 500000 }, { name: "США", lat: 43, lng: -100, r: 800000 }],
+    "Производство чая": [{ name: "Китай", lat: 30, lng: 110, r: 500000 }, { name: "Индия", lat: 20, lng: 80, r: 500000 }, { name: "Кения", lat: 0, lng: 37, r: 500000 }],
+    "Производство кофе": [{ name: "Бразилия", lat: -15, lng: -47, r: 800000 }, { name: "Колумбия", lat: 4, lng: -74, r: 500000 }, { name: "Вьетнам", lat: 16, lng: 106, r: 500000 }],
+    "Производство какао-бобов": [{ name: "Кот-д’Ивуар/Гана", lat: 7, lng: -5, r: 600000 }, { name: "Индонезия", lat: -2, lng: 115, r: 500000 }],
+    "Производство хлопка": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "США", lat: 33, lng: -95, r: 800000 }],
+    "Производство натурального каучука": [{ name: "Таиланд/Малайзия", lat: 5, lng: 102, r: 600000 }, { name: "Индонезия", lat: -2, lng: 115, r: 600000 }],
+    "Производство картофеля": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Россия", lat: 55, lng: 40, r: 1000000 }],
+    "Производство винограда": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Италия/Франция", lat: 43, lng: 10, r: 600000 }, { name: "США", lat: 38, lng: -120, r: 500000 }],
+    "Поголовье КРС": [{ name: "Бразилия", lat: -10, lng: -50, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "США", lat: 40, lng: -100, r: 1000000 }],
+    "Поголовье свиней": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -90, r: 800000 }, { name: "Бразилия", lat: -15, lng: -50, r: 800000 }],
+    "Поголовье овец": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "Австралия", lat: -25, lng: 135, r: 800000 }],
+    "Поголовье коз": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "Пакистан", lat: 30, lng: 70, r: 500000 }],
+    "Рыболовство": [{ name: "Китай", lat: 30, lng: 120, r: 1000000 }, { name: "Перу/Чили", lat: -15, lng: -75, r: 800000 }, { name: "Индонезия", lat: -2, lng: 115, r: 800000 }],
+    "Производство морских судов": [{ name: "Китай", lat: 30, lng: 115, r: 800000 }, { name: "Южная Корея", lat: 36, lng: 128, r: 500000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }],
+    "Производство автомобилей": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -85, r: 800000 }, { name: "Европа", lat: 50, lng: 10, r: 600000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }]
+  }
+};
+
+let indMap = null;
+let indZones = [];
+let indCurrentRegion = 'russia';
+
+function initIndustryMap() {
+  showScreen('screen-industry-map');
+  
+  if (!indMap) {
+    indMap = L.map('map-industries').setView([65, 95], 3);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(indMap);
+  }
+  
+  setTimeout(() => indMap.invalidateSize(), 200);
+  
+  const select = document.getElementById('industry-select');
+  select.innerHTML = '';
+  
+  const regionsData = INDUSTRY_ZONES[indCurrentRegion];
+  for (const industry in regionsData) {
+    const opt = document.createElement('option');
+    opt.value = industry;
+    opt.textContent = industry;
+    select.appendChild(opt);
+  }
+  
+  drawZones();
+}
+
+function switchIndRegion(region) {
+  indCurrentRegion = region;
+  document.getElementById('btn-ind-ru').className = region === 'russia' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  document.getElementById('btn-ind-world').className = region === 'world' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  
+  const center = region === 'russia' ? [65, 95] : [20, 0];
+  const zoom = region === 'russia' ? 3 : 2;
+  indMap.setView(center, zoom);
+  
+  const select = document.getElementById('industry-select');
+  select.innerHTML = '';
+  
+  const regionsData = INDUSTRY_ZONES[indCurrentRegion];
+  for (const industry in regionsData) {
+    const opt = document.createElement('option');
+    opt.value = industry;
+    opt.textContent = industry;
+    select.appendChild(opt);
+  }
+  
+  drawZones();
+}
+
+function drawZones() {
+  indZones.forEach(zone => indMap.removeLayer(zone));
+  indZones = [];
+  
+  const industry = document.getElementById('industry-select').value;
+  const zones = INDUSTRY_ZONES[indCurrentRegion][industry];
+  
+  if (!zones) return;
+  
+  zones.forEach(zone => {
+    const circle = L.circle([zone.lat, zone.lng], {
+      color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35, radius: zone.r, weight: 2
+    }).addTo(indMap);
+    circle.bindPopup(`<b>${zone.name}</b><br>${industry}`);
+    indZones.push(circle);
+  });
+}
+
+// Инициализация
+switchRegion('russia');
+</script>
+</body>
+</html>
