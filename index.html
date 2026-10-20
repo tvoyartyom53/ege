@@ -871,6 +871,7 @@ function renderHome(app) {
   app.innerHTML = `
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Готовимся к ЕГЭ</h1>
     <p class="text-gray-600 mb-8">Выбери предмет и задание — учись в удобном темпе. Или спроси Нейротёму в углу 🧠.</p>
+    
     <div class="grid gap-4 md:grid-cols-2">
       ${DATA.subjects.map(s => {
         const total = s.tasks.reduce((sum, t) => sum + t.cards.length, 0);
@@ -884,6 +885,14 @@ function renderHome(app) {
             </p>
           </a>`;
       }).join('')}
+      
+      <!-- НОВАЯ КАРТОЧКА ГЕОГРАФИИ -->
+      <a href="geography.html" class="block bg-white rounded-2xl shadow-sm hover:shadow-md transition p-6 border border-gray-100">
+        <div class="text-4xl mb-3">🌍</div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-1">География</h2>
+        <p class="text-sm text-gray-600 mb-3">Тренажёр карт: Россия и Мир</p>
+        <p class="text-xs text-gray-500">23 темы • Все флажки на карте</p>
+      </a>
     </div>`;
 }
 
