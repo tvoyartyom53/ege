@@ -4,8 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>География ЕГЭ | Тренажёр</title>
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Puter.js (Нейротёма) -->
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -34,7 +36,7 @@
   .menu-card:active { transform: scale(0.98); }
   .menu-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
   
-  /* Стили для квиза */
+  /* Квиз */
   .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
   .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; }
   .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
@@ -49,7 +51,7 @@
 </head>
 <body>
 
-<!-- ШАПКА (как в русском языке) -->
+<!-- ШАПКА -->
 <header>
   <div class="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
     <a href="index.html" class="text-xl font-bold text-blue-700">🎯 ЕГЭ-подготовка</a>
@@ -82,6 +84,7 @@
 <!-- ЭКРАН 2: МЕНЮ КАРТ -->
 <div id="screen-task4-menu" class="screen p-4">
   <div class="max-w-3xl mx-auto w-full">
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <div class="flex gap-2 mb-6">
       <button onclick="switchRegion('russia')" id="btn-reg-russia" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer">🇷🇺 Россия</button>
       <button onclick="switchRegion('world')" id="btn-reg-world" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer">🌍 Мир</button>
@@ -101,11 +104,16 @@
   <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-5 py-2 rounded-full shadow-lg text-sm flex gap-4 pointer-events-none whitespace-nowrap">
     ✅ <span id="map-correct" class="text-green-600 font-bold">0</span> | ❌ <span id="map-wrong" class="text-red-600 font-bold">0</span> | 📌 Осталось: <span id="map-rem" class="font-bold">0</span>
   </div>
+  <!-- Кнопка вызова Нейронки для карты -->
+  <button onclick="askNeuroMap()" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer">
+    🧠 Спросить Нейротёму
+  </button>
 </div>
 
 <!-- ЭКРАН 4: МЕНЮ 9 ЗАДАНИЯ -->
 <div id="screen-task9-menu" class="screen">
   <div class="w-full max-w-md">
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏭 Задание 9</h1>
     <div class="flex flex-col">
       <button onclick="openRefMenu()" class="menu-card border-l-4 border-l-yellow-500">
@@ -155,6 +163,11 @@
       <h2 id="q9-industry" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
       <div id="q9-options" class="space-y-3"></div>
       <div id="q9-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
+      
+      <!-- Кнопка вызова Нейронки для квиза -->
+      <button onclick="askNeuroQuiz()" class="mt-4 text-xs text-blue-600 hover:text-blue-800 underline self-center block mx-auto">
+        🧠 Спросить Нейротёму
+      </button>
     </div>
     <button id="q9-btn-next" onclick="nextQ9()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
   </div>
@@ -173,12 +186,17 @@
       <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Выберите отрасль</label>
       <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
     </div>
+    <!-- Кнопка вызова Нейронки для карты отраслей -->
+    <button onclick="askNeuroIndustryMap()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer mt-1 self-start">
+      🧠 Спросить про отрасль
+    </button>
   </div>
 </div>
 
 <!-- ЭКРАН 8: СТАТИСТИКА -->
 <div id="screen-stats" class="screen p-4">
   <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center mt-4">📊 Твой прогресс</h1>
     
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
@@ -211,9 +229,9 @@
   </div>
 </div>
 
-<!-- НЕЙРОТЁМА -->
-<button id="neuro-fab" class="fixed bottom-6 right-6 z-[2000] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
-<div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2000] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
+<!-- НЕЙРОТЁМА (Панель) -->
+<button id="neuro-fab" class="fixed bottom-6 right-6 z-[2500] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
+<div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2500] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
   <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
     <div class="font-semibold flex items-center gap-2"><span>🧠</span> Нейротёма</div>
     <button id="neuro-close" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
@@ -252,7 +270,7 @@ function showScreen(id) {
 }
 
 // ============================================================
-//  СТАТИСТИКА (LOCALSTORAGE)
+//  СТАТИСТИКА
 // ============================================================
 let stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
 
@@ -805,7 +823,7 @@ function drawZones() {
 }
 
 // ============================================================
-//  НЕЙРОТЁМА (Puter.js)
+//  НЕЙРОТЁМА (Puter.js) И ВЫЗОВ ИЗ ЗАДАНИЙ
 // ============================================================
 const neuro = {
   fab: null, panel: null, messagesEl: null, inputEl: null,
@@ -928,6 +946,31 @@ async function sendNeuro() {
     }
     addNeuroMessage(msg, 'system');
   }
+}
+
+// Функции вызова Нейротёмы из заданий
+function askNeuroMap() {
+  initNeuro();
+  toggleNeuro(true);
+  const topic = document.getElementById('map-topic-title').textContent;
+  neuro.inputEl.value = `Объясни тему по географии: ${topic}. Подскажи, как лучше запомнить, где находятся эти объекты на карте?`;
+  neuro.inputEl.focus();
+}
+
+function askNeuroQuiz() {
+  initNeuro();
+  toggleNeuro(true);
+  const q = document.getElementById('q9-industry').textContent;
+  neuro.inputEl.value = `Помоги разобраться с заданием 9 ЕГЭ по географии. Отрасль: ${q}. Какой регион или страна точно НЕ подходит и почему?`;
+  neuro.inputEl.focus();
+}
+
+function askNeuroIndustryMap() {
+  initNeuro();
+  toggleNeuro(true);
+  const industry = document.getElementById('industry-select').value;
+  neuro.inputEl.value = `Расскажи подробнее про размещение отрасли: ${industry} в ${indCurrentRegion === 'russia' ? 'России' : 'Мире'}. Какие главные центры нужно знать?`;
+  neuro.inputEl.focus();
 }
 
 // Инициализация при загрузке
