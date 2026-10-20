@@ -4,13 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>География ЕГЭ | Тренажёр</title>
+<!-- Подключаем Leaflet для карт -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Подключаем Puter для Нейротёмы -->
+<script src="https://js.puter.com/v2/"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
   
-  /* Карты (Одинаковые для 4 и 9 задания) */
+  /* Карты */
   #map, #map-industries { height: 100vh; width: 100%; background: #d0d8e0; z-index: 1; }
   #screen-task4-play, #screen-industry-map { overflow: hidden; position: absolute; inset: 0; }
   
@@ -39,6 +42,10 @@
   
   /* Стили для селекта */
   select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+
+  /* Нейротёма */
+  #neuro-panel { display: flex; }
+  #neuro-panel.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -58,6 +65,11 @@
         <div class="text-4xl mb-3">🏭</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
         <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
+      </button>
+      <button onclick="openGeoStats()" class="menu-card border-l-4 border-l-purple-500">
+        <div class="text-4xl mb-3">📊</div>
+        <h2 class="text-xl font-bold text-gray-800">Мой прогресс</h2>
+        <p class="text-sm text-gray-500 mt-1">Статистика правильных ответов</p>
       </button>
     </div>
   </div>
@@ -146,38 +158,137 @@
   </div>
 </div>
 
-<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ (ИСПРАВЛЕНО) -->
+<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ -->
 <div id="screen-industry-map" class="screen">
-  <!-- Карта теперь точно такая же, как в 4 задании, без absolute -->
   <div id="map-industries"></div>
-  
   <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
     <button onclick="showScreen('screen-task9-menu')" class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer self-start">← В меню 9 задания</button>
-    
     <div class="bg-white/95 backdrop-blur p-4 rounded-xl shadow-lg border border-gray-200">
       <div class="flex gap-2 mb-3">
         <button onclick="switchIndRegion('russia')" id="btn-ind-ru" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
         <button onclick="switchIndRegion('world')" id="btn-ind-world" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
       </div>
-      
       <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Выберите отрасль</label>
       <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
     </div>
   </div>
 </div>
 
+<!-- ЭКРАН 8: СТАТИСТИКА -->
+<div id="screen-stats" class="screen p-4">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📊 Твой прогресс</h1>
+    
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">🗺️ Задание 4 (Карты)</h2>
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm text-gray-600">Правильные ответы:</span>
+        <span class="text-green-600 font-bold text-xl" id="stat-map-correct">0</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-gray-600">Ошибки:</span>
+        <span class="text-red-600 font-bold text-xl" id="stat-map-wrong">0</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">🏭 Задание 9 (Отрасли)</h2>
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm text-gray-600">Правильные ответы:</span>
+        <span class="text-green-600 font-bold text-xl" id="stat-q9-correct">0</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-sm text-gray-600">Ошибки:</span>
+        <span class="text-red-600 font-bold text-xl" id="stat-q9-wrong">0</span>
+      </div>
+    </div>
+
+    <button onclick="resetStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">
+      Сбросить статистику
+    </button>
+  </div>
+</div>
+
+<!-- НЕЙРОТЁМА -->
+<button id="neuro-fab" class="fixed bottom-6 right-6 z-[2000] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
+<div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2000] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
+  <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+    <div class="font-semibold flex items-center gap-2"><span>🧠</span> Нейротёма</div>
+    <button id="neuro-close" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
+  </div>
+  <div id="neuro-messages" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm bg-gray-50" style="min-height: 180px;">
+    <div class="text-gray-500 italic">Привет! Я помогу с географией. Спроси что угодно или пришли фото задания/карты.</div>
+  </div>
+  <div id="neuro-image-preview" class="px-3 pb-1 hidden">
+    <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-2 text-xs">
+      <img id="neuro-image-thumb" class="w-10 h-10 object-cover rounded" />
+      <span id="neuro-image-name" class="flex-1 truncate text-gray-600"></span>
+      <button id="neuro-image-remove" class="text-red-500 hover:text-red-700">✕</button>
+    </div>
+  </div>
+  <div class="p-3 border-t border-gray-200 flex items-end gap-2">
+    <label class="cursor-pointer text-gray-500 hover:text-gray-700 p-2" title="Прикрепить фото">📎
+      <input type="file" id="neuro-file-input" accept="image/*" class="hidden" />
+    </label>
+    <textarea id="neuro-input" rows="1" placeholder="Спроси что-нибудь…" class="flex-1 resize-none border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+    <button id="neuro-send" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 py-2 text-sm font-medium">➤</button>
+  </div>
+</div>
+
 <script>
 // ============================================================
-//  ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ
+//  ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
 // ============================================================
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
   if (target) {
     target.classList.add('active');
-    // Принудительное обновление карт после переключения экрана
     if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 250);
     if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 250);
+  }
+}
+
+// ============================================================
+//  СТАТИСТИКА (LOCALSTORAGE)
+// ============================================================
+let stats = {
+  mapCorrect: 0,
+  mapWrong: 0,
+  q9Correct: 0,
+  q9Wrong: 0
+};
+
+function loadStats() {
+  try {
+    const saved = localStorage.getItem('geo_stats');
+    if (saved) stats = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveStats() {
+  localStorage.setItem('geo_stats', JSON.stringify(stats));
+}
+
+function updateStatsDisplay() {
+  document.getElementById('stat-map-correct').textContent = stats.mapCorrect;
+  document.getElementById('stat-map-wrong').textContent = stats.mapWrong;
+  document.getElementById('stat-q9-correct').textContent = stats.q9Correct;
+  document.getElementById('stat-q9-wrong').textContent = stats.q9Wrong;
+}
+
+function openGeoStats() {
+  loadStats();
+  updateStatsDisplay();
+  showScreen('screen-stats');
+}
+
+function resetStats() {
+  if (confirm('Точно сбросить всю статистику?')) {
+    stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
+    saveStats();
+    updateStatsDisplay();
   }
 }
 
@@ -305,9 +416,11 @@ function handleMapClick(name, marker, items) {
 
   if (isCorrect) {
     mapCorrect++;
+    stats.mapCorrect++;
     document.getElementById('map-question').innerHTML = `<span class="text-green-500">✅ Верно!</span>`;
   } else {
     mapWrong++;
+    stats.mapWrong++;
     document.getElementById('map-question').innerHTML = `<span class="text-red-500">❌ Это ${name}</span>`;
     const trueCoords = items[mapCurrentQ];
     const trueMarker = mapMarkers.find(m => {
@@ -316,7 +429,8 @@ function handleMapClick(name, marker, items) {
     });
     if (trueMarker) trueMarker.setIcon(getMapIcon('green'));
   }
-
+  
+  saveStats();
   document.getElementById('map-correct').textContent = mapCorrect;
   document.getElementById('map-wrong').textContent = mapWrong;
   mapIsAnswered = true;
@@ -534,12 +648,16 @@ function checkQ9() {
   if (isAllCorrect) {
     expBox.innerHTML = `<strong>Отлично!</strong> Это действительно главные центры отрасли: ${currentIndustry.name}.`;
     expBox.className = 'mt-5 p-3 bg-green-50 text-green-800 text-sm rounded-lg border border-green-200';
+    stats.q9Correct++;
   } else {
     expBox.innerHTML = `<strong>Есть ошибки.</strong> Правильные ответы подсвечены зелёным. Запомни их!`;
     expBox.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
+    stats.q9Wrong++;
   }
+  saveStats();
+  
   expBox.classList.remove('hidden');
-  document.getElementById('btn-next-q').classList.remove('hidden');
+  document.getElementById('q9-btn-next').classList.remove('hidden');
 }
 
 // ============================================================
@@ -632,13 +750,10 @@ function initIndustryMap() {
   
   if (!indMap) {
     indMap = L.map('map-industries', { zoomControl: false }).setView([65, 95], 3);
-    // Используем тот же сервер карт, что и в 4 задании
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(indMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(indMap);
   }
   
-  setTimeout(() => indMap.invalidateSize(), 300); // Даем карте время прогрузиться
+  setTimeout(() => indMap.invalidateSize(), 300);
   
   const select = document.getElementById('industry-select');
   select.innerHTML = '';
@@ -650,7 +765,6 @@ function initIndustryMap() {
     opt.textContent = industry;
     select.appendChild(opt);
   }
-  
   drawZones();
 }
 
@@ -673,7 +787,6 @@ function switchIndRegion(region) {
     opt.textContent = industry;
     select.appendChild(opt);
   }
-  
   drawZones();
 }
 
@@ -695,8 +808,136 @@ function drawZones() {
   });
 }
 
-// Инициализация
+// ============================================================
+//  НЕЙРОТЁМА (Puter.js)
+// ============================================================
+const neuro = {
+  fab: null, panel: null, messagesEl: null, inputEl: null,
+  fileInput: null, preview: null, thumb: null, name: null, removeBtn: null,
+  currentFile: null, initialized: false
+};
+
+function initNeuro() {
+  if (neuro.initialized) return;
+  neuro.initialized = true;
+  
+  neuro.fab = document.getElementById('neuro-fab');
+  neuro.panel = document.getElementById('neuro-panel');
+  neuro.messagesEl = document.getElementById('neuro-messages');
+  neuro.inputEl = document.getElementById('neuro-input');
+  neuro.fileInput = document.getElementById('neuro-file-input');
+  neuro.preview = document.getElementById('neuro-image-preview');
+  neuro.thumb = document.getElementById('neuro-image-thumb');
+  neuro.name = document.getElementById('neuro-image-name');
+  neuro.removeBtn = document.getElementById('neuro-image-remove');
+
+  neuro.fab.addEventListener('click', () => toggleNeuro());
+  document.getElementById('neuro-close').addEventListener('click', () => toggleNeuro(false));
+
+  neuro.fileInput.addEventListener('change', () => {
+    const f = neuro.fileInput.files[0];
+    if (!f) return;
+    neuro.currentFile = f;
+    neuro.thumb.src = URL.createObjectURL(f);
+    neuro.name.textContent = f.name;
+    neuro.preview.classList.remove('hidden');
+    neuro.fileInput.value = '';
+  });
+  
+  neuro.removeBtn.addEventListener('click', () => {
+    neuro.currentFile = null;
+    neuro.preview.classList.add('hidden');
+    neuro.thumb.src = '';
+  });
+
+  document.getElementById('neuro-send').addEventListener('click', sendNeuro);
+  neuro.inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendNeuro();
+    }
+  });
+}
+
+function toggleNeuro(show) {
+  if (show === undefined) neuro.panel.classList.toggle('hidden');
+  else if (show) neuro.panel.classList.remove('hidden');
+  else neuro.panel.classList.add('hidden');
+  if (!neuro.panel.classList.contains('hidden')) neuro.inputEl.focus();
+}
+
+function addNeuroMessage(text, role = 'user') {
+  const div = document.createElement('div');
+  div.className = role === 'user'
+    ? 'bg-blue-100 text-blue-900 rounded-xl px-3 py-2 ml-8'
+    : role === 'assistant'
+      ? 'bg-white border border-gray-200 text-gray-800 rounded-xl px-3 py-2 mr-8 whitespace-pre-wrap'
+      : 'text-gray-500 italic text-xs';
+  div.textContent = text;
+  neuro.messagesEl.appendChild(div);
+  neuro.messagesEl.scrollTop = neuro.messagesEl.scrollHeight;
+  return div;
+}
+
+async function sendNeuro() {
+  const text = neuro.inputEl.value.trim();
+  if (!text && !neuro.currentFile) return;
+
+  const userMsg = addNeuroMessage(text || '[фото]', 'user');
+  neuro.inputEl.value = '';
+
+  if (neuro.currentFile) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(neuro.currentFile);
+    img.className = 'mt-2 rounded-lg max-h-32 object-cover';
+    userMsg.appendChild(img);
+  }
+
+  const fileToSend = neuro.currentFile;
+  neuro.currentFile = null;
+  neuro.preview.classList.add('hidden');
+  neuro.thumb.src = '';
+
+  const loading = addNeuroMessage('Нейротёма думает…', 'system');
+
+  try {
+    if (typeof puter === 'undefined') {
+      throw new Error('Puter.js не загрузился. Проверь интернет.');
+    }
+
+    let response;
+    if (fileToSend) {
+      response = await puter.ai.chat(text || 'Что на этом фото? Если это задание ЕГЭ — проверь.', fileToSend, { model: 'gpt-4o-mini' });
+    } else {
+      response = await puter.ai.chat(text, { model: 'gpt-4o-mini' });
+    }
+
+    loading.remove();
+
+    let answer = '';
+    if (typeof response === 'string') answer = response;
+    else if (response?.message?.content) answer = response.message.content;
+    else if (response?.text) answer = response.text;
+    else answer = JSON.stringify(response);
+
+    addNeuroMessage(answer, 'assistant');
+  } catch (err) {
+    loading.remove();
+    console.error(err);
+    let msg = 'Не удалось получить ответ. ';
+    if (err.message && /auth|login|sign/i.test(err.message)) {
+      msg += 'Похоже, нужно войти в аккаунт Puter. Попробуй отправить ещё раз.';
+    } else {
+      msg += err.message || 'Попробуй позже.';
+    }
+    addNeuroMessage(msg, 'system');
+  }
+}
+
+// Инициализация при загрузке
+loadStats();
 switchRegion('russia');
+initNeuro();
 </script>
 </body>
 </html>
