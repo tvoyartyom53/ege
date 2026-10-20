@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Итоговое сочинение | Тренажёр</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f8fafc; margin: 0; padding: 0; }
+  header { position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 3000; background: #fff; border-bottom: 1px solid #e5e7eb; }
+  .screen { display: none; position: absolute; top: 64px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: #f8fafc; z-index: 10; }
+  .screen.active { display: block; z-index: 20; }
+  #screen-main.active, #screen-quiz-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .menu-card { background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box; }
+  .menu-card:active { transform: scale(0.98); }
+  .menu-card:hover { background-color: #fdf4ff; border-color: #d946ef; }
+  .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; user-select: none; }
+  .option-btn.selected { background-color: #f3e8ff; border-color: #a855f7; color: #581c87; }
+  .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
+  .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; pointer-events: none; opacity: 0.7; }
+  .option-btn:disabled { cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
+    <a href="index.html" class="text-xl font-bold text-fuchsia-700">✍️ Итоговое сочинение</a>
+    <nav class="flex gap-4">
+      <a href="index.html" class="text-sm text-gray-600 hover:text-gray-900">Главная</a>
+    </nav>
+  </div>
+</header>
+
+<div id="screen-main" class="screen active">
+  <div class="w-full max-w-md">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">✍️ Итоговое сочинение</h1>
+    <p class="text-center text-gray-500 mb-8">Тренажёр литературных аргументов</p>
+    <div class="flex flex-col">
+      <button onclick="showScreen('screen-quiz-menu')" class="menu-card border-l-4 border-l-fuchsia-500">
+        <div class="text-4xl mb-3">🎮</div>
+        <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
+        <p class="text-sm text-gray-500 mt-1">Подбери 2 аргумента к теме</p>
+      </button>
+      <button onclick="openReference()" class="menu-card border-l-4 border-l-blue-500">
+        <div class="text-4xl mb-3">📚</div>
+        <h2 class="text-xl font-bold text-gray-800">Справочник</h2>
+        <p class="text-sm text-gray-500 mt-1">Все аргументы и пересказы</p>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-quiz-menu" class="screen">
+  <div class="w-full max-w-md">
+    <button onclick="showScreen('screen-main')" class="text-fuchsia-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Выбери раздел</h1>
+    <div class="flex flex-col">
+      <button onclick="startQuiz('all')" class="menu-card border-l-4 border-l-fuchsia-500">
+        <h2 class="text-lg font-bold text-gray-800">Все темы (Микс)</h2>
+      </button>
+      <button onclick="startQuiz('1')" class="menu-card border-l-4 border-l-purple-500">
+        <h2 class="text-lg font-bold text-gray-800">1. Духовно-нравственные ориентиры</h2>
+      </button>
+      <button onclick="startQuiz('2')" class="menu-card border-l-4 border-l-orange-500">
+        <h2 class="text-lg font-bold text-gray-800">2. Семья, общество, Отечество</h2>
+      </button>
+      <button onclick="startQuiz('3')" class="menu-card border-l-4 border-l-emerald-500">
+        <h2 class="text-lg font-bold text-gray-800">3. Природа и культура</h2>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="screen-quiz-play" class="screen p-4">
+  <div class="max-w-2xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-4">
+      <button onclick="showScreen('screen-quiz-menu')" class="text-gray-500 hover:text-gray-800 text-sm font-bold bg-transparent border-none cursor-pointer">← В меню</button>
+      <div class="text-sm font-bold text-gray-600">Вопрос <span id="q-num">1</span></div>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden mb-4">
+      <div class="absolute top-0 left-0 h-1 bg-fuchsia-500 w-full"></div>
+      <div class="text-xs text-fuchsia-600 font-bold uppercase tracking-wider mb-2">Тема сочинения</div>
+      <h2 id="theme-title" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
+      
+      <div class="text-sm text-gray-500 mb-4 font-semibold">Выбери <span class="text-fuchsia-600">2 произведения</span>, которые подходят для аргументации:</div>
+      <div id="options-container" class="space-y-3"></div>
+      
+      <button id="btn-check" onclick="checkAnswers()" class="w-full bg-fuchsia-600 text-white font-bold py-3 rounded-xl mt-6 shadow hidden border-none cursor-pointer hover:bg-fuchsia-700 transition">
+        Проверить выбор
+      </button>
+    </div>
+
+    <div id="answer-block" class="hidden space-y-4">
+      <h3 class="text-lg font-bold text-gray-800 mt-6 mb-2">Правильные аргументы:</h3>
+      <div id="arguments-container" class="space-y-4"></div>
+    </div>
+
+    <button id="btn-next" onclick="nextQuestion()" class="w-full bg-fuchsia-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer hover:bg-fuchsia-700 transition mb-10">Следующая тема →</button>
+  </div>
+</div>
+
+<div id="screen-ref" class="screen p-4">
+  <div class="max-w-3xl mx-auto">
+    <button onclick="showScreen('screen-main')" class="text-fuchsia-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📚 Справочник аргументов</h1>
+    <div id="ref-content" class="space-y-6 pb-10"></div>
+  </div>
+</div>
+
+<script>
+const DB = [
+  { section: "1", theme: "Что значит быть честным с самим собой?", options: ["А.С. Пушкин «Капитанская дочка»", "Ф.М. Достоевский «Преступление и наказание»", "А.П. Чехов «Вишневый сад»", "М.А. Булгаков «Собачье сердце»"], correctWorks: ["А.С. Пушкин «Капитанская дочка»", "Ф.М. Достоевский «Преступление и наказание»"], arguments: { "А.С. Пушкин «Капитанская дочка»": "Петр Гринев, оказавшись в плену у Пугачева, отказывается присягать бунтовщику. Он честен перед собой и своей совестью, заявляя: «Я присягал государыне императрице: тебе служить не могу». Искренность и благородство юноши поражают Пугачева, и тот милует его. Этот пример доказывает, что честность с самим собой и верность своим принципам — это качество, которое вызывает уважение даже у врагов и помогает сохранить человеческое достоинство.", "Ф.М. Достоевский «Преступление и наказание»": "Родион Раскольников пытается обмануть свою совесть, создавая бесчеловечную теорию о «право имеющих». Он убеждает себя, что убийство старухи — это справедливость. Однако после преступления он не может жить с этим грузом, его внутренний мир разрушен. Только признавшись Соне и сдавшись полиции, он начинает путь к истине. Этот пример показывает, что быть честным с собой — значит не заглушать голос совести и уметь признавать свои ошибки, как бы тяжело это ни было." } },
+  { section: "1", theme: "Может ли человек изменить свою судьбу?", options: ["А.М. Горький «Старуха Изергиль» (Легенда о Данко)", "И.С. Тургенев «Отцы и дети»", "М.А. Шолохов «Судьба человека»", "Н.В. Гоголь «Шинель»"], correctWorks: ["А.М. Горький «Старуха Изергиль» (Легенда о Данко)", "М.А. Шолохов «Судьба человека»"], arguments: { "А.М. Горький «Старуха Изергиль» (Легенда о Данко)": "Данко, выходец из бедного племени, не смирился с судьбой быть рабом в темном лесу. Он взял на себя ответственность за жизни людей, вырвал из груди пылающее сердце и осветил путь. Его поступок изменил судьбу всего племени, выведя его к свету. Этот пример доказывает, что человек способен изменить не только свою судьбу, но и судьбу окружающих, если готов на подвиг и самопожертвование.", "М.А. Шолохов «Судьба человека»": "Андрей Соколов прошел через ад Великой Отечественной войны, потерял всю семью и испытал ужасы плена. Казалось бы, судьба сломила его, но он нашел в себе силы не озлобиться. Он усыновил мальчика-сироту Ваню, подарив ему надежду на будущее. Этот пример показывает, что даже в самых страшных обстоятельствах человек может выбрать свой путь и изменить судьбу, проявив силу духа и сострадание." } },
+  { section: "1", theme: "В чём разница между мечтой и иллюзией?", options: ["И.А. Гончаров «Обломов»", "А.С. Пушкин «Евгений Онегин»", "М.Ю. Лермонтов «Герой нашего времени»", "А.Н. Островский «Гроза»"], correctWorks: ["И.А. Гончаров «Обломов»", "А.Н. Островский «Гроза»"], arguments: { "И.А. Гончаров «Обломов»": "Илья Обломов живет в мире грез о прекрасном будущем в Обломовке, но ничего не делает для его достижения. Он строит планы, но на деле предпочитает лежать на диване. Его мечта об идеальной жизни превращается в иллюзию, заслоняющую реальность, в то время как его друг Штольц живет реальными делами. Пример Обломова учит нас, что иллюзия — это пассивная мечта, оторванная от действий и ведущая к деградации личности.", "А.Н. Островский «Гроза»": "Катерина мечтает о свободе, настоящей любви и полете, как птица. Однако она живет в доме Кабанихи, где царит «темное царство» и лицемерие. Ее мечты — это искренний порыв души, но суровая реальность делает их иллюзией, несовместимой с жизнью. Трагедия героини показывает, что иногда мечта становится опасной иллюзией, если реальность не оставляет шанса на ее воплощение." } },
+  { section: "2", theme: "Какую роль в жизни человека играет семья?", options: ["А.С. Пушкин «Капитанская дочка»", "Л.Н. Толстой «Война и мир»", "М.Ю. Лермонтов «Герой нашего времени»", "И.С. Тургенев «Отцы и дети»"], correctWorks: ["А.С. Пушкин «Капитанская дочка»", "Л.Н. Толстой «Война и мир»"], arguments: { "А.С. Пушкин «Капитанская дочка»": "Семья Гриневых заложила в Петре важные нравственные качества: понятия чести, долга и верности. Наставление отца «береги честь смолоду» стало для героя путеводной звездой, которая помогла ему не сбиться с пути даже в самых сложных жизненных ситуациях (на войне, в плену). Этот пример показывает, что крепкая семья и правильное воспитание дают человеку моральный стержень на всю жизнь.", "Л.Н. Толстой «Война и мир»": "В семье Ростовых царит атмосфера искренности, любви и взаимопонимания. Наташа Ростова выросла в этом теплом мире и впитала лучшие качества: она эмоциональна, добра и готова помочь другим. В отличие от холодных Курагиных, семья Ростовых дает своим детям нравственную основу, которая помогает им преодолевать жизненные трудности и оставаться людьми в любой ситуации." } },
+  { section: "2", theme: "Почему важно помнить уроки истории?", options: ["А.С. Солженицын «Матрёнин двор»", "М.А. Шолохов «Судьба человека»", "А.С. Пушкин «Медный всадник»", "И.А. Бунин «Господин из Сан-Франциско»"], correctWorks: ["А.С. Солженицын «Матрёнин двор»", "М.А. Шолохов «Судьба человека»"], arguments: { "А.С. Солженицын «Матрёнин двор»": "Судьба Матрёны — это отражение истории русской деревни 50-х годов. Писатель показывает, что забывая о таких бескорыстных людях, как она, общество теряет свои нравственные корни. Ее жизнь была тяжелой, но она сохранила чистоту души и готовность помочь. Память о прошлом и о таких людях, как Матрёна, помогает сохранить человечность и не повторять ошибок, построенных на равнодушии.", "М.А. Шолохов «Судьба человека»": "История Андрея Соколова — это правдивый рассказ о трагедии всего народа в годы войны. Автор показывает, какие страшные испытания выпали на долю людей, как война разрушила семьи. Память о таких исторических событиях важна, чтобы будущие поколения понимали цену мира и не допустили повторения подобной трагедии. Это дань уважения всем, кто выстоял и сохранил в себе человека." } },
+  { section: "2", theme: "Что помогает человеку преодолеть трудности на войне?", options: ["М.А. Шолохов «Судьба человека»", "А.Т. Твардовский «Василий Тёркин»", "В.П. Астафьев «Царь-рыба»", "М.Ю. Лермонтов «Бородино»"], correctWorks: ["М.А. Шолохов «Судьба человека»", "А.Т. Твардовский «Василий Тёркин»"], arguments: { "М.А. Шолохов «Судьба человека»": "Андрей Соколов, пройдя через ад плена и потеряв всю семью, не сломился. Его внутренняя сила, сострадание и умение оставаться человеком даже в нечеловеческих условиях помогли ему выжить. Он не сдался отчаянию и нашел новый смысл жизни, усыновив мальчика Ваню. Этот пример показывает, что на войне человека спасает не только физическая сила, но и сила духа, а также способность любить и заботиться о других.", "А.Т. Твардовский «Василий Тёркин»": "Василий Тёркин — собирательный образ простого русского солдата. Он не обладает сверхъестественными способностями, но его отличает оптимизм, смекалка и душевная простота. В любых ситуациях (будь то переправа или рукопашный бой) он сохраняет чувство юмора и веру в победу. Этот пример доказывает, что преодолеть трудности на войне помогает внутренний стержень, вера в лучшее и товарищеская поддержка." } },
+  { section: "3", theme: "Как природа влияет на внутренний мир человека?", options: ["А.И. Куприн «Олеся»", "В.П. Астафьев «Царь-рыба»", "И.А. Бунин «Чистый понедельник»", "А.П. Чехов «Человек в футляре»"], correctWorks: ["А.И. Куприн «Олеся»", "В.П. Астафьев «Царь-рыба»"], arguments: { "А.И. Куприн «Олеся»": "Главная героиня повести выросла в лесу, вдали от цивилизации, и впитала в себя лучшие качества природы: искренность, доброту и естественность. Её душа осталась чистой и гармоничной, в отличие от людей из «цивилизованного мира», показав, как природа облагораживает человека. Олеся способна на глубокое и бескорыстное чувство, потому что выросла в гармонии с окружающим миром, и это доказывает, что природа формирует лучшие черты характера.", "В.П. Астафьев «Царь-рыба»": "В романе природа выступает как грозная и мудрая сила. Браконьер Игнатьич, поймавший огромного осетра, оказывается на грани жизни и смерти. Встреча с «царем-рыбой» заставляет его переосмыслить всю свою жизнь, вспомнить грехи и раскаяться. Этот пример показывает, что природа способна не только успокаивать, но и воспитывать человека, открывая ему глаза на его собственные ошибки и пробуждая совесть." } },
+  { section: "3", theme: "В чём заключается разрушительная сила технического прогресса?", options: ["М.А. Булгаков «Собачье сердце»", "М.А. Булгаков «Роковые яйца»", "А.С. Пушкин «Капитанская дочка»", "И.С. Тургенев «Отцы и дети»"], correctWorks: ["М.А. Булгаков «Собачье сердце»", "М.А. Булгаков «Роковые яйца»"], arguments: { "М.А. Булгаков «Собачье сердце»": "Профессор Преображенский проводит опасный эксперимент, превращая собаку в человека. Однако технический прогресс (в данном случае медицинский) не может создать человека с моральными ценностями. Шариков становится угрозой для общества: он груб, невежественен и агрессивен. Этот пример доказывает, что научные открытия без нравственной основы могут привести к катастрофе, породив чудовищ, которые разрушают мир вокруг себя.", "М.А. Булгаков «Роковые яйца»": "Профессор Персиков случайно открывает «луч жизни», который ускоряет развитие организмов. Однако из-за ошибки ассистента и вмешательства властей эксперимент выходит из-под контроля: вместо кур появляются гигантские змеи, уничтожающие все на своем пути. Этот пример показывает, что технический прогресс, не контролируемый разумом и ответственностью, может привести к ужасающим последствиям и поставить человечество на грань выживания." } },
+  { section: "3", theme: "Может ли искусство изменить человека?", options: ["Н.В. Гоголь «Портрет»", "М.А. Булгаков «Мастер и Маргарита»", "И.А. Гончаров «Обломов»", "А.П. Чехов «Ионыч»"], correctWorks: ["Н.В. Гоголь «Портрет»", "М.А. Булгаков «Мастер и Маргарита»"], arguments: { "Н.В. Гоголь «Портрет»": "Талантливый художник Чартков, купив роковой портрет, поддается искушению деньгами и славой. Искусство, которое он создает ради наживы, убивает в нем истинное творческое начало, а само знакомство с шедевром вызывает в нем зависть. Он сходит с ума и уничтожает все свои лучшие работы. Этот пример показывает, что искусство может как возвысить, так и погубить душу, если человек теряет свой внутренний компас и поддается порокам.", "М.А. Булгаков «Мастер и Маргарита»": "Мастер создает роман о Понтии Пилате, вкладывая в него всю свою душу. Искусство для него — это смысл жизни. Маргарита, любящая Мастера, готова на все ради его творчества, даже на сделку с дьяволом. В финале они обретают покой, а их любовь и творчество побеждают. Этот пример доказывает, что настоящее искусство способно менять человека, давать ему силы для преодоления любых преград и соединять души." } },
+  { section: "3", theme: "Что значит «быть человеком с большой буквы»?", options: ["А. де Сент-Экзюпери «Маленький принц»", "М.А. Шолохов «Судьба человека»", "А.С. Грибоедов «Горе от ума»", "А.Н. Островский «Гроза»"], correctWorks: ["А. де Сент-Экзюпери «Маленький принц»", "М.А. Шолохов «Судьба человека»"], arguments: { "А. де Сент-Экзюпери «Маленький принц»": "Маленький принц учит нас главным истинам: «зорко одно лишь сердце», «мы в ответе за тех, кого приручили». Он показывает, что взрослые часто забывают о самом важном — о любви, дружбе и ответственности. Быть человеком — значит заботиться о других, видеть красоту в простых вещах и уметь любить. Этот пример показывает, что человечность измеряется не возрастом или статусом, а способностью к искренним чувствам.", "М.А. Шолохов «Судьба человека»": "Андрей Соколов прошел через нечеловеческие испытания, но не утратил способности к состраданию. Его поступок — усыновление сироты Вани — это настоящий человеческий подвиг. Он подарил ребенку надежду, а вместе с ней обрел смысл жизни и сам. Этот пример доказывает, что быть человеком с большой буквы — значит сохранять доброту и готовность помогать ближнему даже после самых страшных ударов судьбы." } }
+];
+
+let currentQuizPool = [], currentQuestion = null, qNumber = 1, selectedOptions = new Set();
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz(section) {
+  currentQuizPool = section === 'all' ? [...DB] : DB.filter(q => q.section === section);
+  currentQuizPool.sort(() => Math.random() - 0.5);
+  qNumber = 1;
+  document.getElementById('q-num').textContent = qNumber;
+  showScreen('screen-quiz-play');
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (currentQuizPool.length === 0) {
+    alert('Вы прошли все темы из этого раздела! Возвращаемся в меню.');
+    showScreen('screen-quiz-menu');
+    return;
+  }
+  currentQuestion = currentQuizPool.pop();
+  document.getElementById('theme-title').textContent = currentQuestion.theme;
+  document.getElementById('answer-block').classList.add('hidden');
+  document.getElementById('btn-next').classList.add('hidden');
+  document.getElementById('btn-check').classList.add('hidden');
+  const optsContainer = document.getElementById('options-container');
+  optsContainer.innerHTML = '';
+  selectedOptions.clear();
+  const shuffledOpts = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+  shuffledOpts.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white cursor-pointer mb-2';
+    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
+    btn.onclick = () => toggleOption(opt, btn);
+    optsContainer.appendChild(btn);
+  });
+  document.getElementById('q-num').textContent = qNumber++;
+}
+
+function toggleOption(opt, btn) {
+  if (btn.disabled) return;
+  if (selectedOptions.has(opt)) {
+    selectedOptions.delete(opt);
+    btn.classList.remove('selected');
+  } else {
+    if (selectedOptions.size < 2) {
+      selectedOptions.add(opt);
+      btn.classList.add('selected');
+    }
+  }
+  document.getElementById('btn-check').classList.toggle('hidden', selectedOptions.size !== 2);
+}
+
+function checkAnswers() {
+  document.querySelectorAll('#options-container .option-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.classList.remove('selected');
+    const optText = btn.innerText.replace(/^\d+\s*/, '').trim();
+    if (currentQuestion.correctWorks.includes(optText)) btn.classList.add('correct');
+    else if (selectedOptions.has(optText)) btn.classList.add('wrong');
+  });
+  document.getElementById('btn-check').classList.add('hidden');
+  const argsContainer = document.getElementById('arguments-container');
+  argsContainer.innerHTML = '';
+  currentQuestion.correctWorks.forEach(work => {
+    argsContainer.innerHTML += `
+      <div class="bg-fuchsia-50 border border-fuchsia-200 rounded-2xl p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-3 border-b border-fuchsia-200 pb-2">${work}</h3>
+        <p class="text-sm text-gray-700 leading-relaxed">${currentQuestion.arguments[work]}</p>
+      </div>`;
+  });
+  document.getElementById('answer-block').classList.remove('hidden');
+  document.getElementById('btn-next').classList.remove('hidden');
+  setTimeout(() => document.getElementById('answer-block').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function openReference() {
+  const container = document.getElementById('ref-content');
+  container.innerHTML = '';
+  const sections = { "1": "Духовно-нравственные ориентиры", "2": "Семья, общество, Отечество", "3": "Природа и культура" };
+  for (const [secId, secName] of Object.entries(sections)) {
+    const sectionItems = DB.filter(item => item.section === secId);
+    let html = `<h2 class="text-xl font-bold text-fuchsia-700 mt-6 mb-4 border-b-2 border-fuchsia-200 pb-2">${secName}</h2>`;
+    sectionItems.forEach(item => {
+      html += `<div class="mb-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100"><div class="font-bold text-gray-800 mb-3 text-lg">Тема: ${item.theme}</div>`;
+      item.correctWorks.forEach(work => {
+        html += `<div class="mb-4 pl-4 border-l-4 border-fuchsia-400"><div class="font-semibold text-fuchsia-600 mb-1">📖 ${work}</div><div class="text-sm text-gray-700 leading-relaxed">${item.arguments[work]}</div></div>`;
+      });
+      html += `</div>`;
+    });
+    container.innerHTML += html;
+  }
+  showScreen('screen-ref');
+}
+</script>
+</body>
+</html>
