@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>География ЕГЭ | Тренажёр карт</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { height: 100vh; overflow: hidden; background: #f0f4f8; }
+
+  /* ===== МЕНЮ ===== */
+  #menu-screen {
+    position: absolute; inset: 0;
+    background: #f0f4f8; z-index: 2000; overflow-y: auto; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .menu-title { font-size: 1.8rem; font-weight: 800; color: #2c3e50; margin: 20px 0 30px; text-align: center; }
+  .region-buttons { display: flex; gap: 12px; margin-bottom: 24px; width: 100%; max-width: 600px; }
+  .region-btn {
+    flex: 1; padding: 18px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 16px;
+    cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .region-btn.active { background: #e3f2fd; color: #1565c0; border: 2px solid #1565c0; }
+  .region-btn.inactive { background: #fff; color: #7f8c8d; border: 2px solid transparent; }
+
+  .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; width: 100%; max-width: 800px; padding-bottom: 40px; }
+  .topic-card {
+    background: #fff; padding: 16px 12px; border-radius: 12px; text-align: center;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: 0.2s;
+    font-weight: 600; color: #34495e; border: 1px solid #e1e8ed; font-size: 0.95rem;
+  }
+  .topic-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-color: #3498db; }
+
+  /* ===== ИГРА ===== */
+  #game-screen { display: none; width: 100%; height: 100%; position: relative; }
+  #map { height: 100vh; width: 100%; background: #d0d8e0; }
+
+  #back-btn {
+    position: absolute; top: 20px; left: 20px; z-index: 1000;
+    background: #fff; color: #2c3e50; border: none; padding: 10px 18px;
+    border-radius: 30px; font-weight: bold; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15); font-size: 0.9rem;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  #back-btn:hover { background: #f8f9fa; }
+
+  #quiz-panel {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.95); padding: 12px 25px;
+    border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 1000; text-align: center; pointer-events: none;
+    min-width: 250px; max-width: 90vw; backdrop-filter: blur(5px);
+  }
+  #topic-title { font-size: 0.85rem; text-transform: uppercase; color: #7f8c8d; letter-spacing: 1px; margin-bottom: 4px; }
+  #question { font-size: 1.4rem; font-weight: 800; color: #1a5276; }
+  #result { margin-top: 6px; font-size: 1rem; font-weight: bold; min-height: 1.2rem; }
+
+  #stats {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.95); padding: 8px 20px;
+    border-radius: 30px; z-index: 1000; font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15); pointer-events: none;
+    display: flex; gap: 14px; white-space: nowrap;
+  }
+  #stats span { font-weight: bold; }
+  .correct { color: #27ae60; }
+  .wrong { color: #e74c3c; }
+
+  @media (max-width: 600px) {
+    #quiz-panel { top: 70px; padding: 10px 15px; width: 90%; }
+    #question { font-size: 1.1rem; }
+    #back-btn { top: 15px; left: 15px; padding: 8px 14px; font-size: 0.8rem; }
+    #stats { bottom: 15px; padding: 6px 15px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ЭКРАН МЕНЮ -->
+<div id="menu-screen">
+  <div class="menu-title">🌍 География ЕГЭ</div>
+  <div class="region-buttons">
+    <button id="btn-reg-russia" class="region-btn active" onclick="switchRegion('russia')">
+      <span style="font-size: 2rem;">🇷🇺</span> Россия
+    </button>
+    <button id="btn-reg-world" class="region-btn inactive" onclick="switchRegion('world')">
+      <span style="font-size: 2rem;">🌍</span> Мир
+    </button>
+  </div>
+  <div id="topics-grid" class="topics-grid"></div>
+</div>
+
+<!-- ЭКРАН ИГРЫ -->
+<div id="game-screen">
+  <div id="map"></div>
+  <button id="back-btn" onclick="goBackToMenu()">← К темам</button>
+
+  <div id="quiz-panel">
+    <div id="topic-title">Загрузка...</div>
+    <div id="question">...</div>
+    <div id="result"></div>
+  </div>
+
+  <div id="stats">
+    ✅ <span id="correct-count" class="correct">0</span> &nbsp;|&nbsp;
+    ❌ <span id="wrong-count" class="wrong">0</span> &nbsp;|&nbsp;
+    📌 Осталось: <span id="remaining-count">0</span>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  БАЗА ДАННЫХ
+// ============================================================
+const GEO_DATA = {
+  russia: {
+    center: [65, 95], zoom: 3,
+    topics: {
+      "r_straits": { name: "Проливы", items: {
+        "Татарский": [49.3167, 141.2167], "Лаперуза": [45.7222, 142.0267], "Литке": [59.0098, 163.4889],
+        "Берингов": [65.9725, -168.7917], "Лонга": [70.1667, 178.0500], "Дмитрия Лаптева": [72.9758, 142.3828],
+        "Санникова": [74.4833, 140.4167], "Вилькицкого": [77.9619, 103.4472], "Карские Ворота": [70.4989, 58.0078],
+        "Маточкин Шар": [73.3886, 55.2156]
+      }},
+      "r_plains": { name: "Равнины", items: {
+        "Колымская низменность": [69, 158], "Яно-Индигирская низменность": [71, 140], "Северо-Сибирская низменность": [73, 110],
+        "Большеземельская тундра": [67.5, 55], "Васюганская равнина": [57.5, 77], "Сибирские Увалы": [63, 75],
+        "Барабинская низменность": [55, 78], "Ишимская равнина": [56, 70], "Среднесибирское плоскогорье": [64, 100],
+        "Общий Сырт": [52, 52], "Среднерусская возвышенность": [52.5, 37], "Смоленско-Московская возвышенность": [55.5, 34],
+        "Валдайская возвышенность": [57.5, 33], "Тиманский кряж": [65.5, 50], "Северные Увалы": [59.5, 45],
+        "Прикаспийская низменность": [47, 48], "Восточно-Европейская равнина": [57, 45], "Западно-Сибирская низменность": [62, 76]
+      }},
+      "r_mountains": { name: "Горы", items: {
+        "Сихотэ-Алинь": [47, 137], "Алтай": [50, 87], "Уральские горы": [60, 59], "Хребет Черского": [65, 145],
+        "Джугджур": [57, 137], "Срединный хребет": [56, 158], "Верхоянский хребет": [67, 130], "Западный Саян": [52, 92],
+        "Восточный Саян": [52, 98], "Кавказ": [44, 43.5], "Высшая точка России": [43, 42], "Восточно-Сибирское нагорье": [66, 152],
+        "Сунтар-Хаята": [62.5, 141], "Становой хребет": [55.5, 128], "Алданское нагорье": [58.5, 123],
+        "Становое нагорье": [56, 115], "Яблоновый хребет": [52, 113], "Колымское нагорье": [63, 158],
+        "Чукотское нагорье": [67, 175], "Корякское нагорье": [62, 172], "Анабарское плато": [70, 108],
+        "Плато Путорана": [69, 95], "Бырранга": [75.5, 105], "Енисейский кряж": [59, 92], "Хамар-Дабан": [51.5, 105]
+      }},
+      "r_peninsulas": { name: "Полуострова", items: {
+        "Камчатка": [56, 160], "Ямал": [70, 69], "Крымский": [45, 34], "Таймыр": [75, 100],
+        "Кольский": [67.5, 37], "Канин": [67.5, 45], "Гыданский": [71, 78], "Чукотка": [66, 172], "Рыбачий": [69.7, 32.5]
+      }},
+      "r_volcano_rivers": { name: "Вулкан и реки", items: {
+        "Ключевская Сопка": [56.06, 160.64], "Енисей": [71, 82], "Амур": [53, 141], "Кама": [55.5, 51],
+        "Дон": [47.5, 40], "Иртыш": [61, 69], "Яна": [70, 135], "Индигирка": [70, 148],
+        "Колыма": [69, 161], "Кубань": [45, 38], "Урал": [51, 51], "Зея": [50, 127],
+        "Бурея": [50, 132], "Обь": [67, 73], "Северная Двина": [64, 40], "Печора": [67, 53],
+        "Вилюй": [63, 113], "Терек": [43.5, 46], "Кума": [44.5, 44], "Селенга": [50, 106], "Аргунь": [52, 120]
+      }},
+      "r_seas": { name: "Моря", items: {
+        "Берингово": [58, -175], "Охотское": [55, 150], "Карское": [75, 80], "Черное": [43, 34],
+        "Белое": [65.5, 38], "Баренцево": [73, 42], "Восточно-Сибирское": [73, 165], "Балтийское": [57, 20]
+      }},
+      "r_islands": { name: "Острова", items: {
+        "Кунашир": [44, 146], "Врангеля": [71, -179], "Ольхон": [53.2, 107.4],
+        "Колгуев": [69, 49], "Вайгач": [70, 59.5], "Ратманова": [65.8, -169]
+      }},
+      "r_gulfs": { name: "Заливы", items: {
+        "Финский": [59.8, 26], "Шелихова": [59.5, 158], "Гижигинская губа": [61.5, 159.5],
+        "Пенжинская губа": [62.3, 163], "Анадырский": [64, 178], "Обская губа": [68, 73], "Байдарацкая губа": [68.5, 67]
+      }},
+      "r_archipelagos": { name: "Архипелаги", items: {
+        "Шантарские острова": [54.8, 137.5], "Земля Франца-Иосифа": [81, 50], "Новая Земля": [74, 56],
+        "Северная Земля": [80, 97], "Новосибирские острова": [75, 145], "Острова Де-Лонга": [76.5, 153.5],
+        "Ляховские острова": [73.5, 142], "Командорские острова": [55, 166], "Курильские острова": [46, 152]
+      }}
+    }
+  },
+  world: {
+    center: [20, 0], zoom: 2,
+    topics: {
+      "w_rivers": { name: "Реки", items: {
+        "Парана": [-34.0, -58.0], "Замбези": [-18.5, 36.3], "Ганг": [22.0, 88.0], "Нигер": [5.3, 6.5],
+        "Дунай": [45.2, 29.7], "Инд": [24.0, 67.5], "Янцзы": [31.4, 121.9], "Брахмапутра": [23.0, 90.5],
+        "Меконг": [10.0, 107.0], "Хуанхэ": [37.8, 119.0], "Конго": [-6.0, 12.3], "Эльба": [53.9, 8.8],
+        "Амазонка": [-0.5, -50.0], "Мадейра": [-3.3, -58.7], "Риу-Негру": [-3.1, -60.0],
+        "Токантинс": [-1.0, -48.5], "Рейн": [51.9, 4.0], "Днепр": [46.5, 32.0], "Евфрат": [30.5, 47.8],
+        "Миссисипи": [29.0, -89.0], "Миссури": [38.8, -90.1], "Нил": [31.5, 31.0], "Белый Нил": [15.6, 32.5],
+        "Святого Лаврентия": [49.0, -64.0], "Голубой Нил": [12.0, 37.3], "Юкон": [62.5, -164.0],
+        "Колумбия": [46.2, -124.0], "Рио-Гранде": [25.9, -97.1], "Дарлинг": [-34.1, 141.9],
+        "Муррей": [-35.5, 138.8], "Ла-Плата": [-35.0, -56.0], "Ориноко": [8.6, -60.7],
+        "Маккензи": [69.0, -134.0], "Колорадо": [31.8, -114.8], "Лимпопо": [-25.0, 33.5],
+        "Оранжевая": [-28.5, 16.5], "Темза": [51.5, 0.5], "Сена": [49.5, 0.1], "Висла": [54.3, 18.8],
+        "Западная Двина": [57.0, 24.0], "Тигр": [31.0, 47.5]
+      }},
+      "w_currents": { name: "Течения", items: {
+        "Лабрадорское": [55, -55], "Канарское": [27, -18], "Бенгельское": [-30, 12],
+        "Западных Ветров (Атл)": [-50, -30], "Северное Пассатное (Атл)": [15, -45], "Гвинейское": [2, -5],
+        "Южное Пассатное (Атл)": [-10, -25], "Гольфстрим": [28, -80], "Североатлантическое": [45, -40],
+        "Ирмингера": [60, -30], "Бразильское": [-30, -45], "Гвианское": [5, -50], "Антильское": [18, -65],
+        "Сомалийское": [8, 52], "Западных Ветров (Инд)": [-45, 80], "Южное Пассатное (Инд)": [-15, 70],
+        "Муссонное": [0, 70], "Мозамбикское": [-20, 40], "Мыса Игольного": [-38, 22],
+        "Калифорнийское": [30, -125], "Перуанское": [-15, -85], "Западных Ветров (Тих)": [-50, -120],
+        "Северное Пассатное (Тих)": [15, -140], "Южное Пассатное (Тих)": [-10, -160],
+        "Межпассатное": [6, -170], "Куросио": [28, 130], "Северо-Тихоокеанское": [40, 170],
+        "Аляскинское": [55, -150], "Восточно-Австралийское": [-25, 155], "Восточно-Гренландское": [72, -25],
+        "Трансарктическое": [80, 0], "Норвежское": [65, 5], "Нордкапское": [72, 25],
+        "Шпицбергенское": [78, 15], "Западно-Гренландское": [65, -55]
+      }},
+      "w_lakes": { name: "Озёра", items: {
+        "Танганьика": [-6, 29.5], "Ньяса": [-12, 34.5], "Виктория": [-1, 33], "Чад": [13, 14],
+        "Лобнор": [40.5, 90.5], "Иссык-Куль": [42.4, 77.2], "Мертвое море": [31.5, 35.5],
+        "Балхаш": [46, 74], "Аральское море": [45, 60], "Верхнее": [47.5, -87], "Гурон": [44.8, -82.5],
+        "Мичиган": [43.5, -87], "Большое Медвежье": [66, -121], "Невольничье": [61, -114],
+        "Эри": [42, -81], "Онтарио": [43.7, -77.8], "Атабаска": [59.5, -109], "Большое Солёное": [41, -112.5],
+        "Виннипег": [52.5, -97.5], "Маракайбо": [10, -71], "Титикака": [-15.5, -69],
+        "Эйр": [-28, 137], "Балатон": [46.8, 17.5], "Женевское": [46.4, 6.5]
+      }},
+      "w_plains": { name: "Равнины", items: {
+        "Плоскогорье Декан": [15, 77], "Бразильское плоскогорье": [-15, -52],
+        "Центральные равнины": [35, -100], "Гвианское плоскогорье": [4, -60],
+        "Великие равнины": [40, -102], "Индо-Гангская низменность": [26, 80],
+        "Восточно-Африканское плоскогорье": [-2, 35], "Центральная низменность": [-20, 135],
+        "Амазонская низменность": [-3, -60], "Великая Китайская равнина": [34, 118],
+        "Ла-Платская низменность": [-32, -60], "Оринокская низменность": [6, -67],
+        "Миссисипская низменность": [33, -90], "Аравийское плоскогорье": [24, 44]
+      }},
+      "w_deserts": { name: "Пустыни", items: {
+        "Сахара": [23, 13], "Атакама": [-24, -70], "Сонора": [30, -112], "Руб-Эль-Хали": [20, 50],
+        "Намиб": [-25, 15], "Пустыня Виктория": [-27, 130], "Гоби": [45, 105],
+        "Калахари": [-24, 22], "Большая Песчаная": [-22, 125]
+      }},
+      "w_peninsulas": { name: "Полуострова", items: {
+        "Малакка": [1.5, 102], "Кейп-Йорк": [-12, 142], "Пиренейский": [40, -4], "Лабрадор": [55, -65],
+        "Аравийский": [23, 45], "Апеннинский": [42, 14], "Индостан": [20, 77], "Индокитай": [15, 105],
+        "Малая Азия": [39, 33], "Антарктический": [-68, -65], "Флорида": [27, -82], "Юкатан": [20, -89],
+        "Аляска": [65, -150], "Сомали": [10, 50], "Арнем-Ленд": [-12, 135], "Балканский": [42, 22],
+        "Скандинавский": [63, 14], "Корея": [37, 128], "Калифорния": [30, -115],
+        "Новая Шотландия": [45, -63], "Ютландия": [56, 9]
+      }},
+      "w_islands": { name: "Острова", items: {
+        "Новая Гвинея": [-5, 140], "Шри-Ланка": [7, 80], "Суматра": [-1, 101], "Куба": [22, -80],
+        "Хонсю": [36, 138], "Исландия": [65, -18], "Ирландия": [53, -8], "Тайвань": [24, 121],
+        "Сицилия": [37.6, 14.0], "Гаити": [19, -72], "Мадагаскар": [-20, 47], "Ньюфаундленд": [49, -56],
+        "Калимантан": [-1, 114], "Тасмания": [-42, 147], "Ява": [-7.5, 110], "Баффинова Земля": [68, -70],
+        "Элсмир": [80, -80], "Сулавеси": [-2, 120], "Сардиния": [40, 9], "Крит": [35, 25],
+        "Корсика": [42, 9], "Корфу": [39.6, 19.9], "Кипр": [35, 33], "Хоккайдо": [43, 142],
+        "Сикоку": [33.5, 133.5], "Кюсю": [33, 131], "Лонг-Айленд": [40.8, -73.5],
+        "Гренландия": [72, -42], "Новая Каледония": [-21, 165]
+      }},
+      "w_seas": { name: "Моря", items: {
+        "Филиппинское": [15, 130], "Карибское": [15, -75], "Аравийское": [15, 60],
+        "Тасманово": [-35, 160], "Южно-Китайское": [12, 112], "Японское": [38, 135],
+        "Андаманское": [10, 95], "Средиземное": [35, 18], "Красное": [20, 38], "Северное": [55, 0],
+        "Норвежское": [66, 5], "Тиморское": [-10, 125], "Арафурское": [-8, 135],
+        "Саргассово": [28, -60], "Коралловое": [-20, 155], "Мраморное": [40, 28],
+        "Бофорта": [72, -140], "Баффина": [72, -70], "Гренландское": [75, -20],
+        "Фиджи": [-18, 175], "Лабрадор": [58, -55], "Желтое": [35, 124], "Лазарева": [-70, 10],
+        "Восточно-Китайское": [30, 125], "Адриатическое": [43, 16], "Эгейское": [38, 25],
+        "Ионическое": [37, 20], "Тирренское": [40, 12], "Уэдделла": [-70, -40]
+      }},
+      "w_archipelagos": { name: "Архипелаги", items: {
+        "Малайский": [0, 110], "Канадский": [75, -100], "Арктический": [80, 0],
+        "Японские острова": [37, 138], "Меланезия": [-10, 160], "Микронезия": [10, 150],
+        "Полинезия": [-15, -150], "Британские острова": [55, -5], "Филиппинский": [12, 122],
+        "Новая Зеландия": [-42, 174], "Антильский": [20, -70], "Фолклендские острова": [-52, -60],
+        "Большие Зондские": [-3, 115], "Малые Зондские": [-8, 120], "Молуккские острова": [-2, 127],
+        "Острова Зелёного мыса": [16, -24], "Огненная Земля": [-54, -70],
+        "Балеарские острова": [39, 3], "Шпицберген": [78, 15], "Алеутские острова": [52, -175],
+        "Коморские острова": [-12, 44], "Галапагосские острова": [-0.5, -90]
+      }},
+      "w_gulfs": { name: "Заливы", items: {
+        "Персидский": [27, 52], "Бенгальский": [15, 88], "Мексиканский": [25, -90],
+        "Бискайский": [45, -5], "Аляска": [58, -150], "Фанди": [45, -65], "Гвинейский": [0, 0],
+        "Гудзонов": [58, -85], "Калифорнийский": [27, -112], "Святого Лаврентия": [48, -64],
+        "Сиамский": [10, 100], "Большой Австралийский": [-32, 130], "Карпентария": [-13, 138],
+        "Аденский": [12, 46], "Ботнический": [63, 20], "Сен-Мало": [48, -2]
+      }},
+      "w_mountains": { name: "Горы", items: {
+        "Альпы": [46.55, 8.45], "Карпаты": [47.00, 25.50], "Апеннины": [43.00, 12.50],
+        "Пиренеи": [42.65, 0.65], "Гималаи": [28.00, 84.00], "Тянь-Шань": [42.00, 80.00],
+        "Памир": [38.50, 73.50], "Гиндукуш": [36.00, 71.00], "Кунь-Лунь": [36.00, 84.00],
+        "Иранское нагорье": [32.00, 54.00], "Нагорье Тибет": [33.00, 88.00], "Нагорье Гоби": [43.00, 105.00],
+        "Кордильеры": [44.00, -115.00], "Скалистые горы": [43.00, -110.00], "Аппалачи": [38.00, -80.00],
+        "Береговой хребет": [52.00, -126.00], "Каскадные горы": [46.00, -122.00],
+        "Сьерра-Невада": [37.50, -119.00], "Анды": [-20.00, -68.00], "Атлас": [31.50, -6.00],
+        "Драконовы Горы": [-29.50, 29.50], "Эфиопское нагорье": [10.00, 38.00],
+        "Нагорье Ахаггар": [23.30, 5.50], "Нагорье Тибести": [21.00, 18.00],
+        "Капские горы": [-33.00, 20.50], "Большой Водораздельный хребет": [-25.00, 148.00],
+        "Массив Винсон": [-78.53, -85.62], "Эверест": [27.99, 86.93], "Эльбрус": [43.35, 42.44],
+        "Килиманджаро": [-3.07, 37.35], "Денали": [63.07, -151.01], "Аконкагуа": [-32.65, -70.01],
+        "Косцюшко": [-36.46, 148.26]
+      }},
+      "w_volcanoes": { name: "Вулканы", items: {
+        "Этна": [37.75, 14.99], "Везувий": [40.82, 14.43], "Эребус": [-77.53, 167.17],
+        "Фудзияма": [35.36, 138.73], "Гекла": [63.98, -19.67], "Орисаба": [19.03, -97.27],
+        "Камерун": [4.22, 9.17], "Попокатепетль": [19.02, -98.62], "Кракатау": [-6.10, 105.41],
+        "Льюльяйльяко": [-24.72, -68.53]
+      }},
+      "w_water": { name: "Водохр./Каналы", items: {
+        "Карибу": [-16.5, 28.5], "Насер": [23, 32], "Вольту": [7, 0.5],
+        "Панамский": [9, -79.5], "Суэцкий": [30, 32.5], "Анхель": [5.97, -62.54],
+        "Игуасу": [-25.69, -54.44], "Ниагарский": [43.08, -79.07]
+      }},
+      "w_straits": { name: "Проливы", items: {
+        "Па-де-Кале": [51, 1.5], "Ла-Манш": [50, -1.5], "Скагеррак": [57, 10], "Босфор": [41.1, 29.1],
+        "Гибралтарский": [36, -5.4], "Магелланов": [-53.5, -70], "Дрейка": [-58, -70],
+        "Торресов": [-10, 142], "Мозамбикский": [-20, 40], "Девисов": [65, -60],
+        "Бассов": [-40, 147], "Кука": [-41, 174], "Дарданеллы": [40, 26], "Каттегат": [56, 11]
+      }}
+    }
+  }
+};
+
+// ============================================================
+//  ЛОГИКА
+// ============================================================
+let map = null;
+let markers = [];
+let available = [];
+let currentQ = null;
+let correct = 0, wrong = 0, isAnswered = false;
+let currentRegion = 'russia';
+let currentTopicId = null;
+
+// Иконки-флажки (маленькие, аккуратные)
+function getIcon(color = 'blue') {
+  const colors = {
+    blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    green: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
+  };
+  return L.icon({
+    iconUrl: colors[color],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+}
+
+function switchRegion(region) {
+  currentRegion = region;
+  document.getElementById('btn-reg-russia').className = 'region-btn ' + (region === 'russia' ? 'active' : 'inactive');
+  document.getElementById('btn-reg-world').className = 'region-btn ' + (region === 'world' ? 'active' : 'inactive');
+
+  const grid = document.getElementById('topics-grid');
+  grid.innerHTML = '';
+  const topics = GEO_DATA[region].topics;
+
+  for (const [id, data] of Object.entries(topics)) {
+    const card = document.createElement('div');
+    card.className = 'topic-card';
+    card.textContent = data.name;
+    card.onclick = () => startTopic(region, id);
+    grid.appendChild(card);
+  }
+}
+
+function startTopic(region, topicId) {
+  currentTopicId = topicId;
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+
+  const data = GEO_DATA[region];
+  const topic = data.topics[topicId];
+  document.getElementById('topic-title').textContent = topic.name;
+
+  // Создаём карту при первом запуске
+  if (!map) {
+    map = L.map('map').setView(data.center, data.zoom);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+  } else {
+    map.setView(data.center, data.zoom);
+    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
+  }
+
+  markers = [];
+  correct = 0;
+  wrong = 0;
+  isAnswered = false;
+  currentQ = null;
+  document.getElementById('correct-count').textContent = '0';
+  document.getElementById('wrong-count').textContent = '0';
+  document.getElementById('result').innerHTML = '';
+
+  available = Object.keys(topic.items);
+
+  for (const [name, coords] of Object.entries(topic.items)) {
+    const marker = L.marker(coords, { icon: getIcon('blue') }).addTo(map);
+    marker.on('click', () => handleClick(name, marker, topic.items));
+    markers.push(marker);
+  }
+
+  setTimeout(() => map.invalidateSize(), 100);
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (available.length === 0) {
+    document.getElementById('question').textContent = '🏁 Викторина завершена!';
+    document.getElementById('remaining-count').textContent = '0';
+    return;
+  }
+
+  markers.forEach(m => m.setIcon(getIcon('blue')));
+
+  const rand = Math.floor(Math.random() * available.length);
+  currentQ = available[rand];
+  document.getElementById('question').textContent = currentQ;
+  document.getElementById('remaining-count').textContent = available.length;
+  document.getElementById('result').innerHTML = '';
+  isAnswered = false;
+}
+
+function handleClick(name, marker, items) {
+  if (isAnswered || !currentQ) return;
+
+  const isCorrect = (name === currentQ);
+  marker.setIcon(getIcon(isCorrect ? 'green' : 'red'));
+
+  if (isCorrect) {
+    correct++;
+    document.getElementById('result').innerHTML = '<span style="color:#27ae60;">✅ Правильно!</span>';
+  } else {
+    wrong++;
+    document.getElementById('result').innerHTML = `<span style="color:#e74c3c;">❌ Это ${name}</span>`;
+    // Подсветить правильный
+    const trueCoords = items[currentQ];
+    const trueMarker = markers.find(m => {
+      const p = m.getLatLng();
+      return Math.abs(p.lat - trueCoords[0]) < 0.001 && Math.abs(p.lng - trueCoords[1]) < 0.001;
+    });
+    if (trueMarker) trueMarker.setIcon(getIcon('green'));
+  }
+
+  document.getElementById('correct-count').textContent = correct;
+  document.getElementById('wrong-count').textContent = wrong;
+  isAnswered = true;
+
+  const idx = available.indexOf(currentQ);
+  if (idx !== -1) available.splice(idx, 1);
+  document.getElementById('remaining-count').textContent = available.length;
+
+  if (available.length === 0) {
+    setTimeout(() => {
+      document.getElementById('question').textContent = '🏁 Викторина завершена!';
+    }, 500);
+    return;
+  }
+
+  setTimeout(nextQuestion, 2000);
+}
+
+function goBackToMenu() {
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'flex';
+}
+
+// Запуск
+switchRegion('russia');
+</script>
+</body>
+</html>
