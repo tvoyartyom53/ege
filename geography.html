@@ -37,13 +37,13 @@
     <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">🌍 География ЕГЭ</h1>
     
     <div class="flex flex-col gap-4">
-      <div onclick="openTask4Menu()" class="menu-card bg-white border-l-4 border-l-blue-500">
+      <div onclick="openTask4Menu()" class="menu-card w-full bg-white border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🗺️</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 4</h2>
         <p class="text-sm text-gray-500 mt-1">Карты России и Мира</p>
       </div>
       
-      <div onclick="openTask9Menu()" class="menu-card bg-white border-l-4 border-l-green-500">
+      <div onclick="openTask9Menu()" class="menu-card w-full bg-white border-l-4 border-l-green-500">
         <div class="text-4xl mb-3">🏭</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
         <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
@@ -87,17 +87,18 @@
 <!-- ================= ЭКРАН 4: МЕНЮ ЗАДАНИЯ 9 ================= -->
 <div id="screen-task9-menu" class="screen items-center justify-center p-4 bg-gray-50">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline">← Назад</a>
+    <!-- Исправлен тег </a> на </button> -->
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏭 Задание 9</h1>
     
     <div class="flex flex-col gap-4">
-      <div onclick="openRefMenu()" class="menu-card border-l-4 border-l-yellow-500">
+      <div onclick="openRefMenu()" class="menu-card w-full border-l-4 border-l-yellow-500">
         <div class="text-4xl mb-3">📚</div>
         <h2 class="text-xl font-bold text-gray-800">Справочник</h2>
         <p class="text-sm text-gray-500 mt-1">Выучить все топы стран и регионов</p>
       </div>
       
-      <div onclick="startQuizMenu()" class="menu-card border-l-4 border-l-blue-500">
+      <div onclick="startQuizMenu()" class="menu-card w-full border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🎮</div>
         <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
         <p class="text-sm text-gray-500 mt-1">Проверить знания в игровом формате</p>
@@ -155,11 +156,7 @@
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active', 'absolute-active');
-    if (id === 'screen-task4-play') {
-      s.style.display = 'none';
-    } else {
-      s.style.display = 'none';
-    }
+    s.style.display = 'none';
   });
   
   const target = document.getElementById(id);
@@ -169,7 +166,6 @@ function showScreen(id) {
   } else {
     target.style.display = 'flex';
     target.classList.add('active');
-    // Если это меню с прокруткой, делаем flex-col
     if(target.classList.contains('overflow-y-auto')) {
       target.style.display = 'block';
     }
@@ -345,7 +341,6 @@ function handleMapClick(name, marker, items) {
     document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
   }
 }
-
 
 // ============================================================
 //  ДАННЫЕ ДЛЯ 9 ЗАДАНИЯ (ЭКОНОМИКА)
