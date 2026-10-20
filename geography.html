@@ -1,982 +1,338 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>География ЕГЭ | Тренажёр</title>
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- Puter.js (Нейротёма) -->
-<script src="https://js.puter.com/v2/"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
-  
-  /* Шапка */
-  header { position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 3000; background: #fff; border-bottom: 1px solid #e5e7eb; }
-  
-  /* Контейнеры экранов */
-  .screen { display: none; position: absolute; top: 64px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: #f0f4f8; z-index: 10; }
-  .screen.active { display: block; z-index: 20; }
-  
-  /* Экраны по центру */
-  #screen-main.active, #screen-task9-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-
-  /* Карты */
-  #map, #map-industries { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
-  #screen-task4-play, #screen-industry-map { overflow: hidden; }
-
-  /* Карточки меню */
-  .menu-card { 
-    background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; 
-    width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box;
-  }
-  .menu-card:active { transform: scale(0.98); }
-  .menu-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
-  
-  /* Квиз */
-  .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
-  .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; }
-  .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
-  .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; pointer-events: none; opacity: 0.7; }
-  .option-btn:disabled { cursor: not-allowed; }
-  
-  select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
-  
-  #neuro-panel { display: flex; }
-  #neuro-panel.hidden { display: none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Задание 27 ЕГЭ | Тренажёр</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f4f8; }
+        .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
+        .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
+        .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; pointer-events: none; opacity: 0.7; }
+        .option-btn:disabled { cursor: not-allowed; }
+    </style>
 </head>
-<body>
-
-<!-- ШАПКА -->
-<header>
-  <div class="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
-    <a href="index.html" class="text-xl font-bold text-blue-700">🎯 ЕГЭ-подготовка</a>
-    <nav class="flex gap-4">
-      <a href="index.html" class="text-sm text-gray-600 hover:text-gray-900">Главная</a>
-      <a href="#" onclick="openGeoStats(); return false;" class="text-sm text-gray-600 hover:text-gray-900">Прогресс</a>
-    </nav>
-  </div>
-</header>
-
-<!-- ЭКРАН 1: ГЛАВНОЕ МЕНЮ -->
-<div id="screen-main" class="screen active">
-  <div class="w-full max-w-md">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">🌍 География ЕГЭ</h1>
-    <div class="flex flex-col">
-      <button onclick="showScreen('screen-task4-menu')" class="menu-card border-l-4 border-l-blue-500">
-        <div class="text-4xl mb-3">🗺️</div>
-        <h2 class="text-xl font-bold text-gray-800">Задание 4</h2>
-        <p class="text-sm text-gray-500 mt-1">Карты России и Мира</p>
-      </button>
-      <button onclick="showScreen('screen-task9-menu')" class="menu-card border-l-4 border-l-green-500">
-        <div class="text-4xl mb-3">🏭</div>
-        <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
-        <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ЭКРАН 2: МЕНЮ КАРТ -->
-<div id="screen-task4-menu" class="screen p-4">
-  <div class="max-w-3xl mx-auto w-full">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
-    <div class="flex gap-2 mb-6">
-      <button onclick="switchRegion('russia')" id="btn-reg-russia" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer">🇷🇺 Россия</button>
-      <button onclick="switchRegion('world')" id="btn-reg-world" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer">🌍 Мир</button>
-    </div>
-    <div id="map-topics-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10"></div>
-  </div>
-</div>
-
-<!-- ЭКРАН 3: КАРТА 4 ЗАДАНИЯ -->
-<div id="screen-task4-play" class="screen">
-  <div id="map"></div>
-  <button onclick="showScreen('screen-task4-menu')" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer">← К темам</button>
-  <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-6 py-3 rounded-xl shadow-lg text-center w-[90%] max-w-sm pointer-events-none">
-    <div id="map-topic-title" class="text-xs text-gray-500 uppercase tracking-wide mb-1">Загрузка...</div>
-    <div id="map-question" class="text-xl font-bold text-blue-900">...</div>
-  </div>
-  <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-5 py-2 rounded-full shadow-lg text-sm flex gap-4 pointer-events-none whitespace-nowrap">
-    ✅ <span id="map-correct" class="text-green-600 font-bold">0</span> | ❌ <span id="map-wrong" class="text-red-600 font-bold">0</span> | 📌 Осталось: <span id="map-rem" class="font-bold">0</span>
-  </div>
-  <!-- Кнопка вызова Нейронки для карты -->
-  <button onclick="askNeuroMap()" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer">
-    🧠 Спросить Нейротёму
-  </button>
-</div>
-
-<!-- ЭКРАН 4: МЕНЮ 9 ЗАДАНИЯ -->
-<div id="screen-task9-menu" class="screen">
-  <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
-    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏭 Задание 9</h1>
-    <div class="flex flex-col">
-      <button onclick="openRefMenu()" class="menu-card border-l-4 border-l-yellow-500">
-        <div class="text-4xl mb-3">📚</div>
-        <h2 class="text-xl font-bold text-gray-800">Справочник</h2>
-        <p class="text-sm text-gray-500 mt-1">Все данные из шпаргалки</p>
-      </button>
-      <button onclick="initIndustryMap()" class="menu-card border-l-4 border-l-orange-500">
-        <div class="text-4xl mb-3">📍</div>
-        <h2 class="text-xl font-bold text-gray-800">Карта отраслей</h2>
-        <p class="text-sm text-gray-500 mt-1">Визуальные зоны на карте</p>
-      </button>
-      <button onclick="startQuizMenu()" class="menu-card border-l-4 border-l-blue-500">
-        <div class="text-4xl mb-3">🎮</div>
-        <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
-        <p class="text-sm text-gray-500 mt-1">Проверить знания (3 из 6)</p>
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ЭКРАН 5: СПРАВОЧНИК 9 -->
-<div id="screen-task9-ref" class="screen p-4">
-  <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
-    <div class="flex gap-2 mb-6">
-      <button onclick="switchRefTab('russia')" id="btn-ref-ru" class="flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
-      <button onclick="switchRefTab('world')" id="btn-ref-world" class="flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
-    </div>
-    <div id="ref-content" class="space-y-4 pb-10"></div>
-  </div>
-</div>
-
-<!-- ЭКРАН 6: ИГРА 9 -->
-<div id="screen-task9-play" class="screen p-4">
-  <div class="max-w-2xl mx-auto w-full">
-    <div class="flex justify-between items-center mb-4">
-      <button onclick="showScreen('screen-task9-menu')" class="text-gray-500 hover:text-gray-800 text-sm font-bold bg-transparent border-none cursor-pointer">← В меню</button>
-      <div class="flex gap-2">
-        <button onclick="startQuiz('russia')" id="btn-q9-ru" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
-        <button onclick="startQuiz('world')" id="btn-q9-world" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
-      </div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden">
-      <div class="absolute top-0 left-0 h-1 bg-green-500 w-full"></div>
-      <div class="text-xs text-green-600 font-bold uppercase tracking-wider mb-2">Выберите 3 правильных</div>
-      <h2 id="q9-industry" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
-      <div id="q9-options" class="space-y-3"></div>
-      <div id="q9-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
-      
-      <!-- Кнопка вызова Нейронки для квиза -->
-      <button onclick="askNeuroQuiz()" class="mt-4 text-xs text-blue-600 hover:text-blue-800 underline self-center block mx-auto">
-        🧠 Спросить Нейротёму
-      </button>
-    </div>
-    <button id="q9-btn-next" onclick="nextQ9()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
-  </div>
-</div>
-
-<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ -->
-<div id="screen-industry-map" class="screen">
-  <div id="map-industries"></div>
-  <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
-    <button onclick="showScreen('screen-task9-menu')" class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer self-start">← В меню 9 задания</button>
-    <div class="bg-white/95 backdrop-blur p-4 rounded-xl shadow-lg border border-gray-200">
-      <div class="flex gap-2 mb-3">
-        <button onclick="switchIndRegion('russia')" id="btn-ind-ru" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
-        <button onclick="switchIndRegion('world')" id="btn-ind-world" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
-      </div>
-      <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Выберите отрасль</label>
-      <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
-    </div>
-    <!-- Кнопка вызова Нейронки для карты отраслей -->
-    <button onclick="askNeuroIndustryMap()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer mt-1 self-start">
-      🧠 Спросить про отрасль
-    </button>
-  </div>
-</div>
-
-<!-- ЭКРАН 8: СТАТИСТИКА -->
-<div id="screen-stats" class="screen p-4">
-  <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
-    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center mt-4">📊 Твой прогресс</h1>
-    
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🗺️ Задание 4 (Карты)</h2>
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm text-gray-600">Правильные ответы:</span>
-        <span class="text-green-600 font-bold text-xl" id="stat-map-correct">0</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span class="text-sm text-gray-600">Ошибки:</span>
-        <span class="text-red-600 font-bold text-xl" id="stat-map-wrong">0</span>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🏭 Задание 9 (Отрасли)</h2>
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm text-gray-600">Правильные ответы:</span>
-        <span class="text-green-600 font-bold text-xl" id="stat-q9-correct">0</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span class="text-sm text-gray-600">Ошибки:</span>
-        <span class="text-red-600 font-bold text-xl" id="stat-q9-wrong">0</span>
-      </div>
-    </div>
-
-    <button onclick="resetStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">
-      Сбросить статистику
-    </button>
-  </div>
-</div>
-
-<!-- НЕЙРОТЁМА (Панель) -->
-<button id="neuro-fab" class="fixed bottom-6 right-6 z-[2500] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
-<div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2500] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
-  <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
-    <div class="font-semibold flex items-center gap-2"><span>🧠</span> Нейротёма</div>
-    <button id="neuro-close" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
-  </div>
-  <div id="neuro-messages" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm bg-gray-50" style="min-height: 180px;">
-    <div class="text-gray-500 italic">Привет! Я помогу с географией. Спроси что угодно или пришли фото задания/карты.</div>
-  </div>
-  <div id="neuro-image-preview" class="px-3 pb-1 hidden">
-    <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-2 text-xs">
-      <img id="neuro-image-thumb" class="w-10 h-10 object-cover rounded" />
-      <span id="neuro-image-name" class="flex-1 truncate text-gray-600"></span>
-      <button id="neuro-image-remove" class="text-red-500 hover:text-red-700">✕</button>
-    </div>
-  </div>
-  <div class="p-3 border-t border-gray-200 flex items-end gap-2">
-    <label class="cursor-pointer text-gray-500 hover:text-gray-700 p-2" title="Прикрепить фото">📎
-      <input type="file" id="neuro-file-input" accept="image/*" class="hidden" />
-    </label>
-    <textarea id="neuro-input" rows="1" placeholder="Спроси что-нибудь…" class="flex-1 resize-none border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-    <button id="neuro-send" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 py-2 text-sm font-medium">➤</button>
-  </div>
-</div>
-
-<script>
-// ============================================================
-//  ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
-// ============================================================
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(id);
-  if (target) {
-    target.classList.add('active');
-    if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 250);
-    if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 250);
-  }
-}
-
-// ============================================================
-//  СТАТИСТИКА
-// ============================================================
-let stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
-
-function loadStats() {
-  try {
-    const saved = localStorage.getItem('geo_stats');
-    if (saved) stats = JSON.parse(saved);
-  } catch(e) {}
-}
-
-function saveStats() {
-  localStorage.setItem('geo_stats', JSON.stringify(stats));
-}
-
-function updateStatsDisplay() {
-  document.getElementById('stat-map-correct').textContent = stats.mapCorrect;
-  document.getElementById('stat-map-wrong').textContent = stats.mapWrong;
-  document.getElementById('stat-q9-correct').textContent = stats.q9Correct;
-  document.getElementById('stat-q9-wrong').textContent = stats.q9Wrong;
-}
-
-function openGeoStats() {
-  loadStats();
-  updateStatsDisplay();
-  showScreen('screen-stats');
-}
-
-function resetStats() {
-  if (confirm('Точно сбросить всю статистику?')) {
-    stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
-    saveStats();
-    updateStatsDisplay();
-  }
-}
-
-// ============================================================
-//  ДАННЫЕ КАРТ (ЗАДАНИЕ 4)
-// ============================================================
-const GEO_DATA = {
-  russia: {
-    center: [65, 95], zoom: 3,
-    topics: {
-      "r_straits": { name: "Проливы", items: { "Татарский": [49.3167, 141.2167], "Лаперуза": [45.7222, 142.0267], "Литке": [59.0098, 163.4889], "Берингов": [65.9725, -168.7917], "Лонга": [70.1667, 178.0500], "Дмитрия Лаптева": [72.9758, 142.3828], "Санникова": [74.4833, 140.4167], "Вилькицкого": [77.9619, 103.4472], "Карские Ворота": [70.4989, 58.0078], "Маточкин Шар": [73.3886, 55.2156] }},
-      "r_plains": { name: "Равнины", items: { "Колымская низменность": [69, 158], "Яно-Индигирская низменность": [71, 140], "Северо-Сибирская низменность": [73, 110], "Большеземельская тундра": [67.5, 55], "Васюганская равнина": [57.5, 77], "Сибирские Увалы": [63, 75], "Барабинская низменность": [55, 78], "Ишимская равнина": [56, 70], "Среднесибирское плоскогорье": [64, 100], "Общий Сырт": [52, 52], "Среднерусская возвышенность": [52.5, 37], "Смоленско-Московская возвышенность": [55.5, 34], "Валдайская возвышенность": [57.5, 33], "Тиманский кряж": [65.5, 50], "Северные Увалы": [59.5, 45], "Прикаспийская низменность": [47, 48], "Восточно-Европейская равнина": [57, 45], "Западно-Сибирская низменность": [62, 76] }},
-      "r_mountains": { name: "Горы", items: { "Сихотэ-Алинь": [47, 137], "Алтай": [50, 87], "Уральские горы": [60, 59], "Хребет Черского": [65, 145], "Джугджур": [57, 137], "Срединный хребет": [56, 158], "Верхоянский хребет": [67, 130], "Западный Саян": [52, 92], "Восточный Саян": [52, 98], "Кавказ": [44, 43.5], "Высшая точка России": [43, 42], "Восточно-Сибирское нагорье": [66, 152], "Сунтар-Хаята": [62.5, 141], "Становой хребет": [55.5, 128], "Алданское нагорье": [58.5, 123], "Становое нагорье": [56, 115], "Яблоновый хребет": [52, 113], "Колымское нагорье": [63, 158], "Чукотское нагорье": [67, 175], "Корякское нагорье": [62, 172], "Анабарское плато": [70, 108], "Плато Путорана": [69, 95], "Бырранга": [75.5, 105], "Енисейский кряж": [59, 92], "Хамар-Дабан": [51.5, 105] }},
-      "r_peninsulas": { name: "Полуострова", items: { "Камчатка": [56, 160], "Ямал": [70, 69], "Крымский": [45, 34], "Таймыр": [75, 100], "Кольский": [67.5, 37], "Канин": [67.5, 45], "Гыданский": [71, 78], "Чукотка": [66, 172], "Рыбачий": [69.7, 32.5] }},
-      "r_volcano_rivers": { name: "Вулкан и реки", items: { "Ключевская Сопка": [56.06, 160.64], "Енисей": [71, 82], "Амур": [53, 141], "Кама": [55.5, 51], "Дон": [47.5, 40], "Иртыш": [61, 69], "Яна": [70, 135], "Индигирка": [70, 148], "Колыма": [69, 161], "Кубань": [45, 38], "Урал": [51, 51], "Зея": [50, 127], "Бурея": [50, 132], "Обь": [67, 73], "Северная Двина": [64, 40], "Печора": [67, 53], "Вилюй": [63, 113], "Терек": [43.5, 46], "Кума": [44.5, 44], "Селенга": [50, 106], "Аргунь": [52, 120] }},
-      "r_seas": { name: "Моря", items: { "Берингово": [58, -175], "Охотское": [55, 150], "Карское": [75, 80], "Черное": [43, 34], "Белое": [65.5, 38], "Баренцево": [73, 42], "Восточно-Сибирское": [73, 165], "Балтийское": [57, 20] }},
-      "r_islands": { name: "Острова", items: { "Кунашир": [44, 146], "Врангеля": [71, -179], "Ольхон": [53.2, 107.4], "Колгуев": [69, 49], "Вайгач": [70, 59.5], "Ратманова": [65.8, -169] }},
-      "r_gulfs": { name: "Заливы", items: { "Финский": [59.8, 26], "Шелихова": [59.5, 158], "Гижигинская губа": [61.5, 159.5], "Пенжинская губа": [62.3, 163], "Анадырский": [64, 178], "Обская губа": [68, 73], "Байдарацкая губа": [68.5, 67] }},
-      "r_archipelagos": { name: "Архипелаги", items: { "Шантарские острова": [54.8, 137.5], "Земля Франца-Иосифа": [81, 50], "Новая Земля": [74, 56], "Северная Земля": [80, 97], "Новосибирские острова": [75, 145], "Острова Де-Лонга": [76.5, 153.5], "Ляховские острова": [73.5, 142], "Командорские острова": [55, 166], "Курильские острова": [46, 152] }}
-    }
-  },
-  world: {
-    center: [20, 0], zoom: 2,
-    topics: {
-      "w_rivers": { name: "Реки", items: { "Парана": [-34.0, -58.0], "Замбези": [-18.5, 36.3], "Ганг": [22.0, 88.0], "Нигер": [5.3, 6.5], "Дунай": [45.2, 29.7], "Инд": [24.0, 67.5], "Янцзы": [31.4, 121.9], "Брахмапутра": [23.0, 90.5], "Меконг": [10.0, 107.0], "Хуанхэ": [37.8, 119.0], "Конго": [-6.0, 12.3], "Эльба": [53.9, 8.8], "Амазонка": [-0.5, -50.0], "Мадейра": [-3.3, -58.7], "Риу-Негру": [-3.1, -60.0], "Токантинс": [-1.0, -48.5], "Рейн": [51.9, 4.0], "Днепр": [46.5, 32.0], "Евфрат": [30.5, 47.8], "Миссисипи": [29.0, -89.0], "Миссури": [38.8, -90.1], "Нил": [31.5, 31.0], "Белый Нил": [15.6, 32.5], "Святого Лаврентия": [49.0, -64.0], "Голубой Нил": [12.0, 37.3], "Юкон": [62.5, -164.0], "Колумбия": [46.2, -124.0], "Рио-Гранде": [25.9, -97.1], "Дарлинг": [-34.1, 141.9], "Муррей": [-35.5, 138.8], "Ла-Плата": [-35.0, -56.0], "Ориноко": [8.6, -60.7], "Маккензи": [69.0, -134.0], "Колорадо": [31.8, -114.8], "Лимпопо": [-25.0, 33.5], "Оранжевая": [-28.5, 16.5], "Темза": [51.5, 0.5], "Сена": [49.5, 0.1], "Висла": [54.3, 18.8], "Западная Двина": [57.0, 24.0], "Тигр": [31.0, 47.5] }},
-      "w_currents": { name: "Течения", items: { "Лабрадорское": [55, -55], "Канарское": [27, -18], "Бенгельское": [-30, 12], "Западных Ветров (Атл)": [-50, -30], "Северное Пассатное (Атл)": [15, -45], "Гвинейское": [2, -5], "Южное Пассатное (Атл)": [-10, -25], "Гольфстрим": [28, -80], "Североатлантическое": [45, -40], "Ирмингера": [60, -30], "Бразильское": [-30, -45], "Гвианское": [5, -50], "Антильское": [18, -65], "Сомалийское": [8, 52], "Западных Ветров (Инд)": [-45, 80], "Южное Пассатное (Инд)": [-15, 70], "Муссонное": [0, 70], "Мозамбикское": [-20, 40], "Мыса Игольного": [-38, 22], "Калифорнийское": [30, -125], "Перуанское": [-15, -85], "Западных Ветров (Тих)": [-50, -120], "Северное Пассатное (Тих)": [15, -140], "Южное Пассатное (Тих)": [-10, -160], "Межпассатное": [6, -170], "Куросио": [28, 130], "Северо-Тихоокеанское": [40, 170], "Аляскинское": [55, -150], "Восточно-Австралийское": [-25, 155], "Восточно-Гренландское": [72, -25], "Трансарктическое": [80, 0], "Норвежское": [65, 5], "Нордкапское": [72, 25], "Шпицбергенское": [78, 15], "Западно-Гренландское": [65, -55] }},
-      "w_lakes": { name: "Озёра", items: { "Танганьика": [-6, 29.5], "Ньяса": [-12, 34.5], "Виктория": [-1, 33], "Чад": [13, 14], "Лобнор": [40.5, 90.5], "Иссык-Куль": [42.4, 77.2], "Мертвое море": [31.5, 35.5], "Балхаш": [46, 74], "Аральское море": [45, 60], "Верхнее": [47.5, -87], "Гурон": [44.8, -82.5], "Мичиган": [43.5, -87], "Большое Медвежье": [66, -121], "Невольничье": [61, -114], "Эри": [42, -81], "Онтарио": [43.7, -77.8], "Атабаска": [59.5, -109], "Большое Солёное": [41, -112.5], "Виннипег": [52.5, -97.5], "Маракайбо": [10, -71], "Титикака": [-15.5, -69], "Эйр": [-28, 137], "Балатон": [46.8, 17.5], "Женевское": [46.4, 6.5] }},
-      "w_plains": { name: "Равнины", items: { "Плоскогорье Декан": [15, 77], "Бразильское плоскогорье": [-15, -52], "Центральные равнины": [35, -100], "Гвианское плоскогорье": [4, -60], "Великие равнины": [40, -102], "Индо-Гангская": [26, 80], "Восточно-Африканское": [-2, 35], "Центральная низменность": [-20, 135], "Амазонская низменность": [-3, -60], "Великая Китайская": [34, 118], "Ла-Платская низменность": [-32, -60], "Оринокская низменность": [6, -67], "Миссисипская низменность": [33, -90], "Аравийское плоскогорье": [24, 44] }},
-      "w_deserts": { name: "Пустыни", items: { "Сахара": [23, 13], "Атакама": [-24, -70], "Сонора": [30, -112], "Руб-Эль-Хали": [20, 50], "Намиб": [-25, 15], "Пустыня Виктория": [-27, 130], "Гоби": [45, 105], "Калахари": [-24, 22], "Большая Песчаная": [-22, 125] }},
-      "w_peninsulas": { name: "Полуострова", items: { "Малакка": [1.5, 102], "Кейп-Йорк": [-12, 142], "Пиренейский": [40, -4], "Лабрадор": [55, -65], "Аравийский": [23, 45], "Апеннинский": [42, 14], "Индостан": [20, 77], "Индокитай": [15, 105], "Малая Азия": [39, 33], "Антарктический": [-68, -65], "Флорида": [27, -82], "Юкатан": [20, -89], "Аляска": [65, -150], "Сомали": [10, 50], "Арнем-Ленд": [-12, 135], "Балканский": [42, 22], "Скандинавский": [63, 14], "Корея": [37, 128], "Калифорния": [30, -115], "Новая Шотландия": [45, -63], "Ютландия": [56, 9] }},
-      "w_islands": { name: "Острова", items: { "Новая Гвинея": [-5, 140], "Шри-Ланка": [7, 80], "Суматра": [-1, 101], "Куба": [22, -80], "Хонсю": [36, 138], "Исландия": [65, -18], "Ирландия": [53, -8], "Тайвань": [24, 121], "Сицилия": [37.6, 14.0], "Гаити": [19, -72], "Мадагаскар": [-20, 47], "Ньюфаундленд": [49, -56], "Калимантан": [-1, 114], "Тасмания": [-42, 147], "Ява": [-7.5, 110], "Баффинова Земля": [68, -70], "Элсмир": [80, -80], "Сулавеси": [-2, 120], "Сардиния": [40, 9], "Крит": [35, 25], "Корсика": [42, 9], "Корфу": [39.6, 19.9], "Кипр": [35, 33], "Хоккайдо": [43, 142], "Сикоку": [33.5, 133.5], "Кюсю": [33, 131], "Лонг-Айленд": [40.8, -73.5], "Гренландия": [72, -42], "Новая Каледония": [-21, 165] }},
-      "w_seas": { name: "Моря", items: { "Филиппинское": [15, 130], "Карибское": [15, -75], "Аравийское": [15, 60], "Тасманово": [-35, 160], "Южно-Китайское": [12, 112], "Японское": [38, 135], "Андаманское": [10, 95], "Средиземное": [35, 18], "Красное": [20, 38], "Северное": [55, 0], "Норвежское": [66, 5], "Тиморское": [-10, 125], "Арафурское": [-8, 135], "Саргассово": [28, -60], "Коралловое": [-20, 155], "Мраморное": [40, 28], "Бофорта": [72, -140], "Баффина": [72, -70], "Гренландское": [75, -20], "Фиджи": [-18, 175], "Лабрадор": [58, -55], "Желтое": [35, 124], "Лазарева": [-70, 10], "Восточно-Китайское": [30, 125], "Адриатическое": [43, 16], "Эгейское": [38, 25], "Ионическое": [37, 20], "Тирренское": [40, 12], "Уэдделла": [-70, -40] }},
-      "w_archipelagos": { name: "Архипелаги", items: { "Малайский": [0, 110], "Канадский": [75, -100], "Арктический": [80, 0], "Японские острова": [37, 138], "Меланезия": [-10, 160], "Микронезия": [10, 150], "Полинезия": [-15, -150], "Британские острова": [55, -5], "Филиппинский": [12, 122], "Новая Зеландия": [-42, 174], "Антильский": [20, -70], "Фолклендские острова": [-52, -60], "Большие Зондские": [-3, 115], "Малые Зондские": [-8, 120], "Молуккские острова": [-2, 127], "Острова Зелёного мыса": [16, -24], "Огненная Земля": [-54, -70], "Балеарские острова": [39, 3], "Шпицберген": [78, 15], "Алеутские острова": [52, -175], "Коморские острова": [-12, 44], "Галапагосские острова": [-0.5, -90] }},
-      "w_gulfs": { name: "Заливы", items: { "Персидский": [27, 52], "Бенгальский": [15, 88], "Мексиканский": [25, -90], "Бискайский": [45, -5], "Аляска": [58, -150], "Фанди": [45, -65], "Гвинейский": [0, 0], "Гудзонов": [58, -85], "Калифорнийский": [27, -112], "Святого Лаврентия": [48, -64], "Сиамский": [10, 100], "Большой Австралийский": [-32, 130], "Карпентария": [-13, 138], "Аденский": [12, 46], "Ботнический": [63, 20], "Сен-Мало": [48, -2] }},
-      "w_mountains": { name: "Горы", items: { "Альпы": [46.55, 8.45], "Карпаты": [47.00, 25.50], "Апеннины": [43.00, 12.50], "Пиренеи": [42.65, 0.65], "Гималаи": [28.00, 84.00], "Тянь-Шань": [42.00, 80.00], "Памир": [38.50, 73.50], "Гиндукуш": [36.00, 71.00], "Кунь-Лунь": [36.00, 84.00], "Иранское нагорье": [32.00, 54.00], "Нагорье Тибет": [33.00, 88.00], "Нагорье Гоби": [43.00, 105.00], "Кордильеры": [44.00, -115.00], "Скалистые горы": [43.00, -110.00], "Аппалачи": [38.00, -80.00], "Береговой хребет": [52.00, -126.00], "Каскадные горы": [46.00, -122.00], "Сьерра-Невада": [37.50, -119.00], "Анды": [-20.00, -68.00], "Атлас": [31.50, -6.00], "Драконовы Горы": [-29.50, 29.50], "Эфиопское нагорье": [10.00, 38.00], "Нагорье Ахаггар": [23.30, 5.50], "Нагорье Тибести": [21.00, 18.00], "Капские горы": [-33.00, 20.50], "Большой Водораздельный хребет": [-25.00, 148.00], "Массив Винсон": [-78.53, -85.62], "Эверест": [27.99, 86.93], "Эльбрус": [43.35, 42.44], "Килиманджаро": [-3.07, 37.35], "Денали": [63.07, -151.01], "Аконкагуа": [-32.65, -70.01], "Косцюшко": [-36.46, 148.26] }},
-      "w_volcanoes": { name: "Вулканы", items: { "Этна": [37.75, 14.99], "Везувий": [40.82, 14.43], "Эребус": [-77.53, 167.17], "Фудзияма": [35.36, 138.73], "Гекла": [63.98, -19.67], "Орисаба": [19.03, -97.27], "Камерун": [4.22, 9.17], "Попокатепетль": [19.02, -98.62], "Кракатау": [-6.10, 105.41], "Льюльяйльяко": [-24.72, -68.53] }},
-      "w_water": { name: "Водохр./Каналы", items: { "Карибу": [-16.5, 28.5], "Насер": [23, 32], "Вольту": [7, 0.5], "Панамский": [9, -79.5], "Суэцкий": [30, 32.5], "Анхель": [5.97, -62.54], "Игуасу": [-25.69, -54.44], "Ниагарский": [43.08, -79.07] }},
-      "w_straits": { name: "Проливы", items: { "Па-де-Кале": [51, 1.5], "Ла-Манш": [50, -1.5], "Скагеррак": [57, 10], "Босфор": [41.1, 29.1], "Гибралтарский": [36, -5.4], "Магелланов": [-53.5, -70], "Дрейка": [-58, -70], "Торресов": [-10, 142], "Мозамбикский": [-20, 40], "Девисов": [65, -60], "Бассов": [-40, 147], "Кука": [-41, 174], "Дарданеллы": [40, 26], "Каттегат": [56, 11] }}
-    }
-  }
-};
-
-let map = null;
-let mapMarkers = [];
-let mapAvailable = [];
-let mapCurrentQ = null;
-let mapCorrect = 0, mapWrong = 0, mapIsAnswered = false;
-let mapCurrentRegion = 'russia';
-
-function getMapIcon(color = 'blue') {
-  const colors = {
-    blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    green: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
-  };
-  return L.icon({
-    iconUrl: colors[color], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-  });
-}
-
-function switchRegion(region) {
-  mapCurrentRegion = region;
-  document.getElementById('btn-reg-russia').className = region === 'russia' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
-  document.getElementById('btn-reg-world').className = region === 'world' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
-
-  const grid = document.getElementById('map-topics-grid');
-  grid.innerHTML = '';
-  for (const [id, data] of Object.entries(GEO_DATA[region].topics)) {
-    const card = document.createElement('div');
-    card.className = 'bg-white p-4 rounded-xl text-center shadow-sm border border-gray-100 font-semibold text-gray-700 hover:bg-blue-50 transition cursor-pointer';
-    card.textContent = data.name;
-    card.onclick = () => startMapTopic(region, id);
-    grid.appendChild(card);
-  }
-}
-
-function startMapTopic(region, topicId) {
-  showScreen('screen-task4-play');
-  const data = GEO_DATA[region];
-  const topic = data.topics[topicId];
-  document.getElementById('map-topic-title').textContent = topic.name;
-
-  if (!map) {
-    map = L.map('map', { zoomControl: false }).setView(data.center, data.zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-  } else {
-    map.setView(data.center, data.zoom);
-    map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
-  }
-
-  setTimeout(() => map.invalidateSize(), 200);
-  mapMarkers = [];
-  mapCorrect = 0; mapWrong = 0; mapIsAnswered = false; mapCurrentQ = null;
-  document.getElementById('map-correct').textContent = '0';
-  document.getElementById('map-wrong').textContent = '0';
-  mapAvailable = Object.keys(topic.items);
-
-  for (const [name, coords] of Object.entries(topic.items)) {
-    const marker = L.marker(coords, { icon: getMapIcon('blue') }).addTo(map);
-    marker.on('click', () => handleMapClick(name, marker, topic.items));
-    mapMarkers.push(marker);
-  }
-  nextMapQ();
-}
-
-function nextMapQ() {
-  if (mapAvailable.length === 0) {
-    document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
-    document.getElementById('map-rem').textContent = '0';
-    return;
-  }
-  mapMarkers.forEach(m => m.setIcon(getMapIcon('blue')));
-  const rand = Math.floor(Math.random() * mapAvailable.length);
-  mapCurrentQ = mapAvailable[rand];
-  document.getElementById('map-question').textContent = mapCurrentQ;
-  document.getElementById('map-rem').textContent = mapAvailable.length;
-  mapIsAnswered = false;
-}
-
-function handleMapClick(name, marker, items) {
-  if (mapIsAnswered || !mapCurrentQ) return;
-  const isCorrect = (name === mapCurrentQ);
-  marker.setIcon(getMapIcon(isCorrect ? 'green' : 'red'));
-
-  if (isCorrect) {
-    mapCorrect++;
-    stats.mapCorrect++;
-    document.getElementById('map-question').innerHTML = `<span class="text-green-500">✅ Верно!</span>`;
-  } else {
-    mapWrong++;
-    stats.mapWrong++;
-    document.getElementById('map-question').innerHTML = `<span class="text-red-500">❌ Это ${name}</span>`;
-    const trueCoords = items[mapCurrentQ];
-    const trueMarker = mapMarkers.find(m => {
-      const p = m.getLatLng();
-      return Math.abs(p.lat - trueCoords[0]) < 0.001 && Math.abs(p.lng - trueCoords[1]) < 0.001;
-    });
-    if (trueMarker) trueMarker.setIcon(getMapIcon('green'));
-  }
-  
-  saveStats();
-  document.getElementById('map-correct').textContent = mapCorrect;
-  document.getElementById('map-wrong').textContent = mapWrong;
-  mapIsAnswered = true;
-
-  const idx = mapAvailable.indexOf(mapCurrentQ);
-  if (idx !== -1) mapAvailable.splice(idx, 1);
-  document.getElementById('map-rem').textContent = mapAvailable.length;
-
-  if (mapAvailable.length > 0) {
-    setTimeout(nextMapQ, 2000);
-  } else {
-    document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
-  }
-}
-
-// ============================================================
-//  БАЗА ЗАДАНИЯ 9
-// ============================================================
-const FAKE_RU = ["Курская область", "Смоленская область", "Мурманская область", "Республика Карелия", "Тверская область", "Калининградская область", "Псковская область", "Новгородская область", "Республика Коми", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Тыва", "Тюменская область", "Архангельская область", "Астраханская область", "Оренбургская область", "Курганская область", "Забайкальский край"];
-const FAKE_WORLD = ["Германия", "Франция", "Япония", "Италия", "Испания", "Швеция", "Финляндия", "Швейцария", "Польша", "Чехия", "Великобритания", "Португалия", "Греция", "Норвегия", "Исландия", "Монголия", "Казахстан", "Беларусь", "Украина", "Венгрия"];
-
-const QUIZ_DB = {
-  russia: [
-    { name: "Нефтяная промышленность", correct: ["Ханты-Мансийский АО", "Ямало-Ненецкий АО", "Республика Татарстан", "Республика Башкортостан", "Самарская область", "Оренбургская область", "Пермский край", "Республика Коми", "Красноярский край", "Иркутская область"] },
-    { name: "Газовая промышленность", correct: ["Ямало-Ненецкий АО", "Ханты-Мансийский АО", "Оренбургская область", "Астраханская область", "Республика Коми", "Сахалинская область", "Красноярский край", "Ставропольский край"] },
-    { name: "Угольная промышленность", correct: ["Кемеровская область", "Республика Коми", "Республика Саха (Якутия)", "Красноярский край", "Иркутская область", "Ростовская область", "Забайкальский край", "Приморский край", "Хабаровский край"] },
-    { name: "Крупные ГЭС", correct: ["Иркутская область", "Красноярский край", "Республика Хакасия", "Волгоградская область", "Амурская область", "Республика Дагестан", "Челябинская область", "Саратовская область", "Нижегородская область", "Пермский край", "Республика Карелия", "Мурманская область"] },
-    { name: "АЭС", correct: ["Мурманская область", "Ленинградская область", "Тверская область", "Курская область", "Смоленская область", "Воронежская область", "Ростовская область", "Свердловская область", "Челябинская область"] },
-    { name: "Крупные ТЭС", correct: ["Ханты-Мансийский АО", "Ямало-Ненецкий АО", "Республика Коми", "Красноярский край", "Иркутская область", "Ростовская область", "Челябинская область", "Тюменская область", "Свердловская область", "Московская область"] },
-    { name: "Чёрная металлургия (полный цикл)", correct: ["Челябинская область", "Свердловская область", "Липецкая область", "Вологодская область", "Кемеровская область"] },
-    { name: "Алюминиевая промышленность", correct: ["Иркутская область", "Красноярский край", "Кемеровская область", "Свердловская область", "Мурманская область", "Республика Хакасия", "Ленинградская область", "Республика Карелия", "Волгоградская область"] },
-    { name: "Медная промышленность", correct: ["Свердловская область", "Красноярский край", "Челябинская область", "Оренбургская область"] },
-    { name: "Никелевая промышленность", correct: ["Мурманская область", "Оренбургская область", "Красноярский край"] },
-    { name: "Тяжёлое машиностроение", correct: ["Свердловская область", "Курганская область", "Челябинская область", "Орловская область", "Новгородская область", "Пермский край", "Кемеровская область"] },
-    { name: "Ж/д машиностроение", correct: ["Брянская область", "Тверская область", "Калужская область", "Пензенская область", "Свердловская область", "Челябинская область", "Оренбургская область"] },
-    { name: "Автомобилестроение", correct: ["Самарская область", "Нижегородская область", "Калужская область", "Ульяновская область", "г. Санкт-Петербург", "г. Москва", "Республика Татарстан", "Свердловская область", "Челябинская область"] },
-    { name: "Судостроение", correct: ["г. Санкт-Петербург", "Ленинградская область", "Архангельская область", "Нижегородская область", "Астраханская область", "Хабаровский край", "Приморский край"] },
-    { name: "Сельскохозяйственное машиностроение", correct: ["Ростовская область", "Красноярский край", "Челябинская область", "Новосибирская область"] },
-    { name: "Калийные удобрения", correct: ["Пермский край", "Саратовская область"] },
-    { name: "Фосфорные удобрения", correct: ["Вологодская область", "Московская область", "Ленинградская область", "Кировская область", "Смоленская область", "Брянская область"] },
-    { name: "Азотные удобрения", correct: ["Новгородская область", "Липецкая область", "Кемеровская область", "Тульская область", "Нижегородская область", "Саратовская область", "Астраханская область", "Хабаровский край", "Приморский край"] },
-    { name: "Синтетический каучук", correct: ["Республика Татарстан", "Самарская область", "Воронежская область", "Омская область"] },
-    { name: "Шинное производство", correct: ["Московская область", "Ленинградская область", "Воронежская область", "Омская область"] },
-    { name: "Химия органического синтеза", correct: ["Тверская область", "Ярославская область", "Тульская область", "Воронежская область", "Курская область", "Волгоградская область", "Самарская область", "Республика Башкортостан", "Республика Татарстан", "Омская область", "Томская область", "Кемеровская область", "Ленинградская область"] },
-    { name: "Серная кислота", correct: ["Челябинская область", "Нижегородская область"] },
-    { name: "Лесозаготовка", correct: ["Архангельская область", "Иркутская область", "Ленинградская область", "Республика Коми", "Республика Карелия", "Красноярский край", "Пермский край"] },
-    { name: "Целлюлозно-бумажная (ЦБК)", correct: ["Республика Карелия", "Архангельская область", "Республика Коми", "Красноярский край", "Иркутская область", "Пермский край"] },
-    { name: "Производство пшеницы", correct: ["Ростовская область", "Краснодарский край", "Ставропольский край", "Алтайский край", "Омская область", "Оренбургская область", "Курганская область", "Тюменская область", "Новосибирская область", "Челябинская область", "Волгоградская область", "Саратовская область", "Воронежская область", "Курская область", "Белгородская область", "Тамбовская область", "Липецкая область", "Пензенская область", "Ульяновская область", "Самарская область", "Республика Башкортостан", "Республика Татарстан"] },
-    { name: "Производство кукурузы", correct: ["Краснодарский край", "Ставропольский край", "Ростовская область", "Воронежская область", "Белгородская область", "Курская область", "Тамбовская область", "Липецкая область", "Орловская область", "Брянская область", "Тульская область", "Рязанская область", "Московская область"] },
-    { name: "Производство риса", correct: ["Краснодарский край", "Ростовская область", "Астраханская область", "Волгоградская область", "Республика Дагестан", "Приморский край", "Челябинская область", "Хабаровский край", "Еврейская АО"] },
-    { name: "Производство подсолнечника", correct: ["Ростовская область", "Краснодарский край", "Ставропольский край", "Воронежская область", "Саратовская область", "Волгоградская область", "Тамбовская область", "Липецкая область", "Курская область", "Белгородская область", "Оренбургская область", "Самарская область", "Ульяновская область", "Пензенская область", "Орловская область", "Тульская область", "Рязанская область", "Московская область"] },
-    { name: "Производство сахарной свёклы", correct: ["Краснодарский край", "Ставропольский край", "Ростовская область", "Воронежская область", "Белгородская область", "Курская область", "Липецкая область", "Тамбовская область", "Орловская область", "Брянская область", "Тульская область", "Рязанская область", "Московская область", "Пензенская область", "Ульяновская область", "Самарская область", "Саратовская область", "Волгоградская область", "Республика Башкортостан", "Республика Татарстан", "Республика Мордовия", "Чувашская Республика", "Республика Марий Эл", "Удмуртская Республика", "Кировская область", "Пермский край", "Свердловская область", "Челябинская область", "Курганская область", "Омская область", "Новосибирская область", "Алтайский край", "Красноярский край", "Иркутская область"] },
-    { name: "Производство сои", correct: ["Амурская область", "Приморский край", "Хабаровский край", "Еврейская АО", "Краснодарский край", "Ставропольский край", "Ростовская область", "Курская область", "Белгородская область", "Воронежская область", "Тамбовская область", "Липецкая область"] },
-    { name: "Производство картофеля", correct: ["Брянская область", "Тульская область", "Московская область", "Рязанская область", "Владимирская область", "Ивановская область", "Костромская область", "Ярославская область", "Тверская область", "Смоленская область", "Калужская область", "Орловская область", "Курская область", "Белгородская область", "Воронежская область", "Липецкая область", "Тамбовская область", "Пензенская область", "Ульяновская область", "Самарская область", "Саратовская область", "Волгоградская область", "Астраханская область", "Ростовская область", "Краснодарский край", "Ставропольский край", "Республика Дагестан", "Республика Калмыкия", "Республика Татарстан", "Республика Башкортостан", "Республика Марий Эл", "Чувашская Республика", "Удмуртская Республика", "Кировская область", "Пермский край", "Свердловская область", "Челябинская область", "Курганская область", "Тюменская область", "Омская область", "Новосибирская область", "Томская область", "Кемеровская область", "Алтайский край", "Красноярский край", "Иркутская область", "Республика Бурятия", "Забайкальский край", "Амурская область", "Еврейская АО", "Хабаровский край", "Приморский край", "Сахалинская область", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Саха (Якутия)", "Республика Коми", "Архангельская область", "Вологодская область", "Мурманская область", "Республика Карелия", "Ленинградская область", "Новгородская область", "Псковская область", "Калининградская область"] },
-    { name: "Производство овощей", correct: ["Астраханская область", "Волгоградская область", "Ростовская область", "Краснодарский край", "Ставропольский край", "Республика Дагестан", "Республика Калмыкия", "Московская область", "Ленинградская область", "Тульская область", "Рязанская область", "Владимирская область", "Ивановская область", "Костромская область", "Ярославская область", "Тверская область", "Смоленская область", "Калужская область", "Брянская область", "Орловская область", "Курская область", "Белгородская область", "Воронежская область", "Липецкая область", "Тамбовская область", "Пензенская область", "Ульяновская область", "Самарская область", "Саратовская область", "Республика Татарстан", "Республика Башкортостан", "Республика Марий Эл", "Чувашская Республика", "Удмуртская Республика", "Кировская область", "Пермский край", "Свердловская область", "Челябинская область", "Курганская область", "Тюменская область", "Омская область", "Новосибирская область", "Томская область", "Кемеровская область", "Алтайский край", "Красноярский край", "Иркутская область", "Республика Бурятия", "Забайкальский край", "Амурская область", "Еврейская АО", "Хабаровский край", "Приморский край", "Сахалинская область", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Саха (Якутия)", "Республика Коми", "Архангельская область", "Вологодская область", "Мурманская область", "Республика Карелия", "Ленинградская область", "Новгородская область", "Псковская область", "Калининградская область"] },
-    { name: "Садоводство", correct: ["Краснодарский край", "Ставропольский край", "Ростовская область", "Волгоградская область", "Астраханская область", "Республика Дагестан", "Республика Калмыкия", "Воронежская область", "Белгородская область", "Курская область", "Липецкая область", "Тамбовская область", "Пензенская область", "Ульяновская область", "Самарская область", "Саратовская область", "Республика Татарстан", "Республика Башкортостан", "Республика Марий Эл", "Чувашская Республика", "Удмуртская Республика", "Кировская область", "Пермский край", "Свердловская область", "Челябинская область", "Курганская область", "Тюменская область", "Омская область", "Новосибирская область", "Томская область", "Кемеровская область", "Алтайский край", "Красноярский край", "Иркутская область", "Республика Бурятия", "Забайкальский край", "Амурская область", "Еврейская АО", "Хабаровский край", "Приморский край", "Сахалинская область", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Саха (Якутия)", "Республика Коми", "Архангельская область", "Вологодская область", "Мурманская область", "Республика Карелия", "Ленинградская область", "Новгородская область", "Псковская область", "Калининградская область"] },
-    { name: "Овцеводство", correct: ["Республика Дагестан", "Республика Калмыкия", "Ставропольский край", "Астраханская область", "Ростовская область", "Волгоградская область", "Оренбургская область", "Челябинская область", "Курганская область", "Алтайский край", "Забайкальский край", "Республика Бурятия", "Республика Тыва", "Республика Хакасия", "Красноярский край", "Иркутская область"] },
-    { name: "Свиноводство", correct: ["Белгородская область", "Курская область", "Воронежская область", "Тамбовская область", "Липецкая область", "Орловская область", "Брянская область", "Тульская область", "Рязанская область", "Московская область", "Ленинградская область", "Новгородская область", "Псковская область", "Смоленская область", "Тверская область", "Ярославская область", "Костромская область", "Ивановская область", "Владимирская область", "Калужская область", "Республика Татарстан", "Республика Башкортостан", "Удмуртская Республика", "Чувашская Республика", "Республика Марий Эл", "Республика Мордовия", "Пензенская область", "Саратовская область", "Самарская область", "Ульяновская область", "Оренбургская область", "Курганская область", "Свердловская область", "Челябинская область", "Тюменская область", "Омская область", "Новосибирская область", "Кемеровская область", "Алтайский край", "Красноярский край", "Иркутская область", "Забайкальский край", "Приморский край", "Хабаровский край", "Амурская область"] },
-    { name: "Молочное скотоводство (КРС)", correct: ["Вологодская область", "Кировская область", "Московская область", "Ленинградская область", "Свердловская область", "Тверская область", "Ярославская область", "Смоленская область", "Новгородская область", "Псковская область", "Республика Карелия", "Республика Коми", "Архангельская область", "Мурманская область", "Республика Татарстан", "Республика Башкортостан", "Удмуртская Республика", "Чувашская Республика", "Республика Марий Эл", "Республика Мордовия", "Пензенская область", "Саратовская область", "Самарская область", "Ульяновская область", "Оренбургская область", "Курганская область", "Челябинская область", "Тюменская область", "Омская область", "Новосибирская область", "Томская область", "Кемеровская область", "Алтайский край", "Красноярский край", "Иркутская область", "Республика Бурятия", "Забайкальский край", "Приморский край", "Хабаровский край", "Амурская область", "Сахалинская область", "Камчатский край"] }
-  ],
-  world: [
-    { name: "Добыча нефти", correct: ["Саудовская Аравия", "Россия", "Канада", "Иран", "Ирак", "Китай", "ОАЭ", "Кувейт", "Бразилия", "Венесуэла"] },
-    { name: "Добыча природного газа", correct: ["США", "Россия", "Иран", "Канада", "Катар", "Китай", "Австралия", "Норвегия", "Саудовская Аравия", "Алжир", "Нидерланды"] },
-    { name: "Добыча угля", correct: ["Китай", "Индия", "США", "Индонезия", "Австралия", "Россия", "ЮАР", "Германия", "Польша", "Казахстан"] },
-    { name: "Добыча железной руды", correct: ["Австралия", "Бразилия", "Китай", "Индия", "Россия", "ЮАР", "Украина", "Канада", "США"] },
-    { name: "Производство стали", correct: ["Китай", "Индия", "Япония", "США", "Россия", "Южная Корея", "Германия", "Турция", "Бразилия", "Иран"] },
-    { name: "Добыча бокситов (алюминий)", correct: ["Австралия", "Китай", "Бразилия", "Индия", "Индонезия", "Гвинея", "Ямайка", "Россия", "Казахстан", "Суринам"] },
-    { name: "Добыча медных руд", correct: ["Чили", "Перу", "Китай", "ДР Конго", "США", "Австралия", "Замбия", "Россия", "Мексика", "Индонезия"] },
-    { name: "Добыча олова", correct: ["Китай", "Индонезия", "Мьянма", "Перу", "Боливия", "Бразилия", "ДР Конго", "Вьетнам", "Нигерия", "Малайзия"] },
-    { name: "Производство азотных удобрений", correct: ["Китай", "Индия", "США", "Россия", "Канада", "Германия", "Франция", "Египет", "Индонезия", "Пакистан"] },
-    { name: "Производство калийных удобрений", correct: ["Канада", "Россия", "Беларусь", "Китай", "Германия", "Израиль", "Иордания", "Чили", "США", "Великобритания"] },
-    { name: "Производство фосфорных удобрений", correct: ["Китай", "США", "Марокко", "Россия", "Индия", "Бразилия", "Перу", "Вьетнам", "Иордания", "Израиль"] },
-    { name: "Синтетический каучук", correct: ["США", "Япония", "Китай", "Россия", "Индия", "Франция", "Германия", "Бразилия", "Тайвань", "Республика Корея", "Великобритания", "Нидерланды", "Бельгия", "Мексика", "Аргентина", "Перу", "Колумбия", "Венесуэла", "ДР Конго", "Индонезия", "Малайзия"] },
-    { name: "Лесная промышленность", correct: ["Россия", "США", "Канада", "Норвегия", "Швеция", "Финляндия", "Бразилия", "Индонезия", "Китай", "Индия"] },
-    { name: "Льняные ткани", correct: ["Россия", "Беларусь", "Украина", "Китай", "Франция", "Индия", "Польша", "Литва"] },
-    { name: "Хлопчатобумажные ткани", correct: ["Китай", "Индия", "США", "Пакистан", "Бразилия", "Узбекистан"] },
-    { name: "Производство пшеницы", correct: ["Китай", "Индия", "Россия", "США", "Франция", "Канада", "Германия", "Пакистан", "Австралия", "Украина"] },
-    { name: "Производство риса", correct: ["Китай", "Индия", "Индонезия", "Бангладеш", "Вьетнам", "Мьянма", "Таиланд", "Филиппины", "Бразилия", "Япония"] },
-    { name: "Производство кукурузы", correct: ["США", "Китай", "Бразилия", "Аргентина", "Украина", "Индия", "Мексика", "Индонезия", "Франция", "ЮАР"] },
-    { name: "Производство сои", correct: ["Бразилия", "США", "Аргентина", "Китай", "Индия", "Парагвай", "Канада", "Украина", "Россия", "Боливия"] },
-    { name: "Производство сахарного тростника", correct: ["Бразилия", "Индия", "Китай", "Таиланд", "Пакистан", "Мексика", "Колумбия", "Австралия", "Индонезия", "Филиппины"] },
-    { name: "Производство сахарной свеклы", correct: ["Россия", "Франция", "США", "Германия", "Турция", "Польша", "Украина", "Китай", "Великобритания", "Нидерланды"] },
-    { name: "Производство чая", correct: ["Китай", "Индия", "Кения", "Шри-Ланка", "Турция", "Вьетнам", "Индонезия", "Мьянма", "Аргентина", "Япония"] },
-    { name: "Производство кофе", correct: ["Бразилия", "Вьетнам", "Колумбия", "Индонезия", "Эфиопия", "Гондурас", "Индия", "Уганда", "Перу", "Мексика"] },
-    { name: "Производство какао-бобов", correct: ["Кот-д’Ивуар", "Гана", "Индонезия", "Нигерия", "Камерун", "Бразилия", "Эквадор", "Мексика", "Перу", "Доминиканская Республика"] },
-    { name: "Производство хлопка", correct: ["Китай", "Индия", "США", "Бразилия", "Пакистан", "Турция", "Узбекистан", "Австралия", "Аргентина", "Греция"] },
-    { name: "Производство натурального каучука", correct: ["Таиланд", "Индонезия", "Вьетнам", "Индия", "Китай", "Малайзия", "Нигерия", "Шри-Ланка", "Либерия", "Бразилия"] },
-    { name: "Производство картофеля", correct: ["Китай", "Индия", "Россия", "Украина", "США", "Германия", "Польша", "Беларусь", "Нидерланды", "Франция"] },
-    { name: "Производство винограда", correct: ["Китай", "Италия", "США", "Франция", "Испания", "Турция", "Аргентина", "Чили", "Индия", "Иран", "Австралия"] },
-    { name: "Поголовье КРС", correct: ["Бразилия", "Индия", "США", "Китай", "Эфиопия", "Аргентина", "Пакистан", "Мексика", "Судан", "Австралия"] },
-    { name: "Поголовье свиней", correct: ["Китай", "США", "Бразилия", "Испания", "Вьетнам", "Германия", "Россия", "Мексика", "Мьянма", "Индия"] },
-    { name: "Поголовье овец", correct: ["Китай", "Индия", "Австралия", "Иран", "Нигерия", "Судан", "Великобритания", "ЮАР", "Турция", "Пакистан"] },
-    { name: "Поголовье коз", correct: ["Китай", "Индия", "Пакистан", "Нигерия", "Бангладеш", "Иран", "Судан", "Кения", "Индонезия", "Танзания"] },
-    { name: "Рыболовство", correct: ["Китай", "Перу", "Индонезия", "Индия", "Россия", "США", "Вьетнам", "Япония", "Норвегия", "Филиппины"] },
-    { name: "Производство морских судов", correct: ["Китай", "Республика Корея", "Япония", "Норвегия"] },
-    { name: "Производство автомобилей", correct: ["Китай", "США", "Япония", "Германия", "Индия"] }
-  ]
-};
-
-function getDistractors(region, correctList) {
-  const pool = region === 'russia' ? [...FAKE_RU] : [...FAKE_WORLD];
-  pool.sort(() => Math.random() - 0.5);
-  return pool.filter(item => !correctList.includes(item)).slice(0, 3);
-}
-
-let currentQuizRegion = 'russia';
-let currentIndustry = null;
-let currentOptions = [];
-let selectedOpts = new Set();
-let correctAnswerIndices = new Set();
-let q9Answered = false;
-
-function openRefMenu() {
-  showScreen('screen-task9-ref');
-  switchRefTab('russia');
-}
-
-function switchRefTab(region) {
-  document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  
-  const container = document.getElementById('ref-content');
-  container.innerHTML = '';
-  
-  QUIZ_DB[region].forEach(item => {
-    container.innerHTML += `
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
-        <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-800">${item.name}</div>
-        <div class="p-4 text-sm text-gray-700">${item.correct.join(', ')}</div>
-      </div>`;
-  });
-}
-
-function startQuizMenu() {
-  showScreen('screen-task9-play');
-  startQuiz('russia');
-}
-
-function startQuiz(region) {
-  currentQuizRegion = region;
-  document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  nextQ9();
-}
-
-function nextQ9() {
-  document.getElementById('q9-btn-next').classList.add('hidden');
-  document.getElementById('q9-explanation').classList.add('hidden');
-  
-  const pool = QUIZ_DB[currentQuizRegion];
-  currentIndustry = pool[Math.floor(Math.random() * pool.length)];
-  
-  const correctPool = [...currentIndustry.correct];
-  const chosenCorrect = [];
-  while(chosenCorrect.length < 3 && correctPool.length > 0) {
-    const idx = Math.floor(Math.random() * correctPool.length);
-    chosenCorrect.push(correctPool.splice(idx, 1)[0]);
-  }
-  
-  const chosenDist = getDistractors(currentQuizRegion, currentIndustry.correct);
-  currentOptions = [...chosenCorrect, ...chosenDist].sort(() => Math.random() - 0.5);
-  
-  correctAnswerIndices = new Set();
-  currentOptions.forEach((opt, i) => {
-    if (chosenCorrect.includes(opt)) correctAnswerIndices.add(i);
-  });
-  
-  selectedOpts.clear();
-  q9Answered = false;
-  
-  document.getElementById('q9-industry').textContent = currentIndustry.name;
-  const optContainer = document.getElementById('q9-options');
-  optContainer.innerHTML = '';
-  
-  currentOptions.forEach((opt, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer';
-    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
-    btn.onclick = () => toggleQ9Option(idx, btn);
-    optContainer.appendChild(btn);
-  });
-}
-
-function toggleQ9Option(idx, btn) {
-  if (q9Answered) return;
-  if (selectedOpts.has(idx)) {
-    selectedOpts.delete(idx);
-    btn.classList.remove('selected');
-  } else {
-    if (selectedOpts.size < 3) {
-      selectedOpts.add(idx);
-      btn.classList.add('selected');
-    }
-  }
-  if (selectedOpts.size === 3) checkQ9();
-}
-
-function checkQ9() {
-  q9Answered = true;
-  let isAllCorrect = true;
-  
-  document.querySelectorAll('#q9-options .option-btn').forEach((btn, idx) => {
-    btn.disabled = true;
-    if (correctAnswerIndices.has(idx)) {
-      btn.classList.add('correct');
-      btn.classList.remove('selected');
-    } else if (selectedOpts.has(idx)) {
-      btn.classList.add('wrong');
-      btn.classList.remove('selected');
-      isAllCorrect = false;
-    }
-  });
-  
-  const expBox = document.getElementById('q9-explanation');
-  if (isAllCorrect) {
-    expBox.innerHTML = `<strong>Отлично!</strong> Это действительно главные центры отрасли: ${currentIndustry.name}.`;
-    expBox.className = 'mt-5 p-3 bg-green-50 text-green-800 text-sm rounded-lg border border-green-200';
-    stats.q9Correct++;
-  } else {
-    expBox.innerHTML = `<strong>Есть ошибки.</strong> Правильные ответы подсвечены зелёным. Запомни их!`;
-    expBox.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
-    stats.q9Wrong++;
-  }
-  saveStats();
-  
-  expBox.classList.remove('hidden');
-  document.getElementById('q9-btn-next').classList.remove('hidden');
-}
-
-// ============================================================
-//  КАРТА ОТРАСЛЕЙ (ЗОНЫ)
-// ============================================================
-const INDUSTRY_ZONES = {
-  russia: {
-    "Нефтяная промышленность": [{ name: "Западная Сибирь", lat: 61, lng: 72, r: 350000 }, { name: "Волго-Урал", lat: 54, lng: 52, r: 250000 }, { name: "Тимано-Печора", lat: 66, lng: 55, r: 200000 }],
-    "Газовая промышленность": [{ name: "Ямал", lat: 70, lng: 72, r: 300000 }, { name: "Оренбург/Астрахань", lat: 48, lng: 52, r: 200000 }, { name: "Сахалин", lat: 52, lng: 143, r: 150000 }, { name: "Коми", lat: 64, lng: 55, r: 200000 }],
-    "Угольная промышленность": [{ name: "Кузбасс", lat: 55, lng: 86, r: 200000 }, { name: "Печорский бассейн", lat: 67, lng: 60, r: 150000 }, { name: "Южная Якутия", lat: 58, lng: 125, r: 200000 }, { name: "Канско-Ачинский", lat: 56, lng: 92, r: 150000 }],
-    "Крупные ГЭС": [{ name: "Ангара (Иркутск)", lat: 55, lng: 103, r: 150000 }, { name: "Енисей (Красноярск)", lat: 55, lng: 92, r: 150000 }, { name: "Волга (Волгоград)", lat: 48, lng: 44, r: 150000 }],
-    "АЭС": [{ name: "Кольская", lat: 67, lng: 32, r: 100000 }, { name: "Ленинградская", lat: 59, lng: 29, r: 100000 }, { name: "Смоленская", lat: 54, lng: 34, r: 100000 }, { name: "Курская", lat: 51, lng: 35, r: 100000 }, { name: "Балаковская (Саратов)", lat: 52, lng: 47, r: 100000 }, { name: "Ростовская", lat: 47, lng: 42, r: 100000 }],
-    "Крупные ТЭС": [{ name: "Сургутская", lat: 61, lng: 73, r: 100000 }, { name: "Костромская", lat: 58, lng: 41, r: 100000 }, { name: "Рефтинская", lat: 57, lng: 61, r: 100000 }],
-    "Чёрная металлургия (полный цикл)": [{ name: "Урал", lat: 56, lng: 60, r: 200000 }, { name: "Череповец", lat: 59, lng: 38, r: 100000 }, { name: "Липецк", lat: 52, lng: 39, r: 100000 }, { name: "Кузбасс", lat: 54, lng: 87, r: 100000 }],
-    "Алюминиевая промышленность": [{ name: "Красноярск", lat: 58, lng: 92, r: 150000 }, { name: "Иркутск (Братск)", lat: 56, lng: 101, r: 200000 }, { name: "Хакасия (Саяногорск)", lat: 53, lng: 91, r: 100000 }, { name: "Мурманск (Кандалакша)", lat: 67, lng: 32, r: 100000 }],
-    "Медная промышленность": [{ name: "Норильск", lat: 69, lng: 88, r: 150000 }, { name: "Урал", lat: 57, lng: 60, r: 150000 }],
-    "Никелевая промышленность": [{ name: "Норильск", lat: 69, lng: 88, r: 150000 }, { name: "Мурманск", lat: 68, lng: 33, r: 100000 }, { name: "Оренбург (Орск)", lat: 51, lng: 58, r: 100000 }],
-    "Тяжёлое машиностроение": [{ name: "Урал (Екатеринбург)", lat: 56, lng: 60, r: 150000 }, { name: "Курган", lat: 55, lng: 65, r: 100000 }, { name: "Кемерово", lat: 55, lng: 86, r: 100000 }],
-    "Ж/д машиностроение": [{ name: "Брянск", lat: 53, lng: 34, r: 100000 }, { name: "Тверь", lat: 56, lng: 35, r: 100000 }],
-    "Автомобилестроение": [{ name: "Поволжье (Тольятти, НН)", lat: 55, lng: 48, r: 200000 }, { name: "Калуга", lat: 54, lng: 36, r: 100000 }, { name: "Санкт-Петербург", lat: 59, lng: 30, r: 100000 }],
-    "Судостроение": [{ name: "Санкт-Петербург", lat: 59, lng: 30, r: 100000 }, { name: "Архангельск", lat: 64, lng: 40, r: 150000 }, { name: "Нижний Новгород", lat: 56, lng: 44, r: 100000 }],
-    "Сельскохозяйственное машиностроение": [{ name: "Ростов-на-Дону", lat: 47, lng: 39, r: 100000 }, { name: "Красноярск", lat: 56, lng: 92, r: 100000 }],
-    "Калийные удобрения": [{ name: "Пермь (Соликамск)", lat: 59, lng: 56, r: 100000 }],
-    "Фосфорные удобрения": [{ name: "Череповец", lat: 59, lng: 38, r: 100000 }, { name: "Воскресенск (МО)", lat: 55, lng: 38, r: 100000 }],
-    "Азотные удобрения": [{ name: "Новгород", lat: 58, lng: 31, r: 100000 }, { name: "Липецк", lat: 52, lng: 39, r: 100000 }, { name: "Кемерово", lat: 55, lng: 86, r: 100000 }],
-    "Синтетический каучук": [{ name: "Нижнекамск", lat: 55, lng: 51, r: 100000 }, { name: "Самара", lat: 53, lng: 50, r: 100000 }, { name: "Воронеж", lat: 51, lng: 39, r: 100000 }, { name: "Омск", lat: 54, lng: 73, r: 100000 }],
-    "Шинное производство": [{ name: "Московская обл.", lat: 55, lng: 38, r: 100000 }, { name: "Ленинградская обл.", lat: 59, lng: 30, r: 100000 }, { name: "Омск", lat: 54, lng: 73, r: 100000 }],
-    "Химия органического синтеза": [{ name: "Тверь/Ярославль", lat: 57, lng: 38, r: 150000 }, { name: "Воронеж/Курск", lat: 51, lng: 38, r: 150000 }, { name: "Поволжье", lat: 54, lng: 50, r: 150000 }, { name: "Омск/Томск/Кемерово", lat: 55, lng: 82, r: 200000 }],
-    "Серная кислота": [{ name: "Челябинск", lat: 55, lng: 61, r: 100000 }, { name: "Дзержинск", lat: 56, lng: 43, r: 100000 }],
-    "Лесозаготовка": [{ name: "Архангельск", lat: 64, lng: 40, r: 200000 }, { name: "Иркутск/Красноярск", lat: 57, lng: 98, r: 250000 }, { name: "Коми/Карелия", lat: 64, lng: 45, r: 200000 }],
-    "Целлюлозно-бумажная (ЦБК)": [{ name: "Карелия (Сегежа)", lat: 63, lng: 34, r: 100000 }, { name: "Архангельск (Котлас)", lat: 61, lng: 46, r: 100000 }, { name: "Иркутск (Братск)", lat: 56, lng: 101, r: 100000 }],
-    "Производство пшеницы": [{ name: "Северный Кавказ", lat: 45, lng: 40, r: 250000 }, { name: "Западная Сибирь", lat: 53, lng: 78, r: 300000 }, { name: "Центральное Черноземье", lat: 51, lng: 38, r: 200000 }],
-    "Производство кукурузы": [{ name: "Краснодар/Ставрополь", lat: 45, lng: 41, r: 200000 }, { name: "Воронеж/Белгород", lat: 51, lng: 38, r: 150000 }],
-    "Производство риса": [{ name: "Краснодар", lat: 45, lng: 39, r: 100000 }, { name: "Астрахань/Дагестан", lat: 46, lng: 47, r: 150000 }, { name: "Приморье", lat: 44, lng: 132, r: 100000 }],
-    "Производство подсолнечника": [{ name: "Поволжье", lat: 51, lng: 46, r: 200000 }, { name: "Северный Кавказ", lat: 45, lng: 40, r: 200000 }, { name: "Центральное Черноземье", lat: 51, lng: 38, r: 150000 }],
-    "Производство сахарной свёклы": [{ name: "Краснодарский край", lat: 45, lng: 39, r: 150000 }, { name: "Воронеж/Курск/Белгород", lat: 51, lng: 37, r: 200000 }, { name: "Татарстан/Башкортостан", lat: 55, lng: 52, r: 200000 }],
-    "Производство сои": [{ name: "Амурская область", lat: 50, lng: 127, r: 200000 }, { name: "Краснодарский край", lat: 45, lng: 39, r: 150000 }],
-    "Производство картофеля": [{ name: "Центральная Россия", lat: 54, lng: 37, r: 250000 }, { name: "Брянск/Тула", lat: 53, lng: 36, r: 150000 }, { name: "Татарстан/Башкортостан", lat: 55, lng: 53, r: 200000 }],
-    "Производство овощей": [{ name: "Астрахань/Волгоград", lat: 47, lng: 45, r: 150000 }, { name: "Московская область", lat: 55, lng: 38, r: 150000 }],
-    "Садоводство": [{ name: "Северный Кавказ", lat: 45, lng: 40, r: 200000 }, { name: "Центральное Черноземье", lat: 51, lng: 39, r: 150000 }],
-    "Овцеводство": [{ name: "Дагестан/Калмыкия", lat: 45, lng: 45, r: 200000 }, { name: "Ставрополь", lat: 45, lng: 42, r: 150000 }, { name: "Забайкалье/Бурятия", lat: 52, lng: 108, r: 200000 }],
-    "Свиноводство": [{ name: "Белгород/Курск/Воронеж", lat: 51, lng: 37, r: 150000 }, { name: "Московская область", lat: 55, lng: 38, r: 150000 }, { name: "Татарстан/Марий Эл", lat: 56, lng: 49, r: 150000 }],
-    "Молочное скотоводство (КРС)": [{ name: "Вологодская/Кировская", lat: 59, lng: 45, r: 200000 }, { name: "Московская/Ленинградская", lat: 57, lng: 35, r: 150000 }, { name: "Свердловская", lat: 57, lng: 61, r: 150000 }]
-  },
-  world: {
-    "Добыча нефти": [{ name: "Ближний Восток", lat: 25, lng: 45, r: 1200000 }, { name: "Северная Америка", lat: 40, lng: -100, r: 1500000 }, { name: "Венесуэла", lat: 8, lng: -65, r: 500000 }, { name: "Западная Сибирь (РФ)", lat: 61, lng: 72, r: 1500000 }],
-    "Добыча природного газа": [{ name: "Ближний Восток", lat: 27, lng: 50, r: 1000000 }, { name: "Северная Америка", lat: 45, lng: -100, r: 1500000 }, { name: "Западная Сибирь (РФ)", lat: 65, lng: 75, r: 1500000 }],
-    "Добыча угля": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 80, r: 800000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }, { name: "Австралия", lat: -25, lng: 135, r: 800000 }],
-    "Добыча железной руды": [{ name: "Австралия", lat: -25, lng: 118, r: 800000 }, { name: "Бразилия", lat: -18, lng: -45, r: 800000 }, { name: "Китай", lat: 40, lng: 115, r: 800000 }],
-    "Производство стали": [{ name: "Китай", lat: 35, lng: 110, r: 1200000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }],
-    "Добыча бокситов (алюминий)": [{ name: "Австралия", lat: -20, lng: 135, r: 800000 }, { name: "Гвинея", lat: 10, lng: -10, r: 500000 }, { name: "Бразилия", lat: -10, lng: -50, r: 800000 }],
-    "Добыча медных руд": [{ name: "Чили", lat: -30, lng: -70, r: 500000 }, { name: "Перу", lat: -10, lng: -75, r: 500000 }, { name: "ДР Конго", lat: -5, lng: 25, r: 600000 }],
-    "Добыча олова": [{ name: "Китай", lat: 25, lng: 105, r: 500000 }, { name: "Индонезия", lat: -2, lng: 115, r: 500000 }],
-    "Производство азотных удобрений": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "США", lat: 40, lng: -90, r: 1000000 }],
-    "Производство калийных удобрений": [{ name: "Канада", lat: 55, lng: -105, r: 1000000 }, { name: "Россия", lat: 60, lng: 55, r: 1000000 }, { name: "Беларусь", lat: 53, lng: 28, r: 400000 }],
-    "Производство фосфорных удобрений": [{ name: "Китай", lat: 30, lng: 110, r: 1000000 }, { name: "США", lat: 30, lng: -85, r: 800000 }, { name: "Марокко", lat: 30, lng: -5, r: 500000 }],
-    "Синтетический каучук": [{ name: "США", lat: 40, lng: -90, r: 1000000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }, { name: "Китай", lat: 35, lng: 110, r: 1000000 }],
-    "Лесная промышленность": [{ name: "Россия", lat: 60, lng: 90, r: 1500000 }, { name: "Канада", lat: 55, lng: -105, r: 1200000 }, { name: "Бразилия", lat: -5, lng: -55, r: 1000000 }],
-    "Льняные ткани": [{ name: "Россия", lat: 55, lng: 40, r: 800000 }, { name: "Китай", lat: 35, lng: 110, r: 1000000 }],
-    "Хлопчатобумажные ткани": [{ name: "Китай", lat: 30, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Пакистан", lat: 30, lng: 70, r: 500000 }],
-    "Производство пшеницы": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 25, lng: 75, r: 1000000 }, { name: "Северная Америка", lat: 45, lng: -100, r: 1500000 }, { name: "Россия/Украина", lat: 50, lng: 40, r: 1000000 }],
-    "Производство риса": [{ name: "Китай", lat: 30, lng: 110, r: 800000 }, { name: "Индия", lat: 20, lng: 78, r: 800000 }, { name: "Индонезия", lat: -2, lng: 115, r: 800000 }],
-    "Производство кукурузы": [{ name: "США", lat: 42, lng: -95, r: 1200000 }, { name: "Китай", lat: 38, lng: 108, r: 1000000 }, { name: "Бразилия", lat: -15, lng: -50, r: 800000 }],
-    "Производство сои": [{ name: "США", lat: 40, lng: -95, r: 1000000 }, { name: "Бразилия", lat: -15, lng: -50, r: 1200000 }, { name: "Аргентина", lat: -35, lng: -60, r: 800000 }],
-    "Производство сахарного тростника": [{ name: "Бразилия", lat: -10, lng: -50, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Китай", lat: 25, lng: 110, r: 800000 }],
-    "Производство сахарной свеклы": [{ name: "Россия/Украина", lat: 50, lng: 35, r: 800000 }, { name: "Франция", lat: 47, lng: 2, r: 500000 }, { name: "США", lat: 43, lng: -100, r: 800000 }],
-    "Производство чая": [{ name: "Китай", lat: 30, lng: 110, r: 500000 }, { name: "Индия", lat: 20, lng: 80, r: 500000 }, { name: "Кения", lat: 0, lng: 37, r: 500000 }],
-    "Производство кофе": [{ name: "Бразилия", lat: -15, lng: -47, r: 800000 }, { name: "Колумбия", lat: 4, lng: -74, r: 500000 }, { name: "Вьетнам", lat: 16, lng: 106, r: 500000 }],
-    "Производство какао-бобов": [{ name: "Кот-д’Ивуар/Гана", lat: 7, lng: -5, r: 600000 }, { name: "Индонезия", lat: -2, lng: 115, r: 500000 }],
-    "Производство хлопка": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "США", lat: 33, lng: -95, r: 800000 }],
-    "Производство натурального каучука": [{ name: "Таиланд/Малайзия", lat: 5, lng: 102, r: 600000 }, { name: "Индонезия", lat: -2, lng: 115, r: 600000 }],
-    "Производство картофеля": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "Россия", lat: 55, lng: 40, r: 1000000 }],
-    "Производство винограда": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Италия/Франция", lat: 43, lng: 10, r: 600000 }, { name: "США", lat: 38, lng: -120, r: 500000 }],
-    "Поголовье КРС": [{ name: "Бразилия", lat: -10, lng: -50, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 1000000 }, { name: "США", lat: 40, lng: -100, r: 1000000 }],
-    "Поголовье свиней": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -90, r: 800000 }, { name: "Бразилия", lat: -15, lng: -50, r: 800000 }],
-    "Поголовье овец": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "Австралия", lat: -25, lng: 135, r: 800000 }],
-    "Поголовье коз": [{ name: "Китай", lat: 35, lng: 110, r: 800000 }, { name: "Индия", lat: 22, lng: 78, r: 800000 }, { name: "Пакистан", lat: 30, lng: 70, r: 500000 }],
-    "Рыболовство": [{ name: "Китай", lat: 30, lng: 120, r: 1000000 }, { name: "Перу/Чили", lat: -15, lng: -75, r: 800000 }, { name: "Индонезия", lat: -2, lng: 115, r: 800000 }],
-    "Производство морских судов": [{ name: "Китай", lat: 30, lng: 115, r: 800000 }, { name: "Южная Корея", lat: 36, lng: 128, r: 500000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }],
-    "Производство автомобилей": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -85, r: 800000 }, { name: "Европа", lat: 50, lng: 10, r: 600000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }]
-  }
-};
-
-let indMap = null;
-let indZones = [];
-let indCurrentRegion = 'russia';
-
-function initIndustryMap() {
-  showScreen('screen-industry-map');
-  
-  if (!indMap) {
-    indMap = L.map('map-industries', { zoomControl: false }).setView([65, 95], 3);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(indMap);
-  }
-  
-  setTimeout(() => indMap.invalidateSize(), 300);
-  
-  const select = document.getElementById('industry-select');
-  select.innerHTML = '';
-  
-  const regionsData = INDUSTRY_ZONES[indCurrentRegion];
-  for (const industry in regionsData) {
-    const opt = document.createElement('option');
-    opt.value = industry;
-    opt.textContent = industry;
-    select.appendChild(opt);
-  }
-  drawZones();
-}
-
-function switchIndRegion(region) {
-  indCurrentRegion = region;
-  document.getElementById('btn-ind-ru').className = region === 'russia' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  document.getElementById('btn-ind-world').className = region === 'world' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  
-  const center = region === 'russia' ? [65, 95] : [20, 0];
-  const zoom = region === 'russia' ? 3 : 2;
-  indMap.setView(center, zoom);
-  
-  const select = document.getElementById('industry-select');
-  select.innerHTML = '';
-  
-  const regionsData = INDUSTRY_ZONES[indCurrentRegion];
-  for (const industry in regionsData) {
-    const opt = document.createElement('option');
-    opt.value = industry;
-    opt.textContent = industry;
-    select.appendChild(opt);
-  }
-  drawZones();
-}
-
-function drawZones() {
-  indZones.forEach(zone => indMap.removeLayer(zone));
-  indZones = [];
-  
-  const industry = document.getElementById('industry-select').value;
-  const zones = INDUSTRY_ZONES[indCurrentRegion][industry];
-  
-  if (!zones) return;
-  
-  zones.forEach(zone => {
-    const circle = L.circle([zone.lat, zone.lng], {
-      color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35, radius: zone.r, weight: 2
-    }).addTo(indMap);
-    circle.bindPopup(`<b>${zone.name}</b><br>${industry}`);
-    indZones.push(circle);
-  });
-}
-
-// ============================================================
-//  НЕЙРОТЁМА (Puter.js) И ВЫЗОВ ИЗ ЗАДАНИЙ
-// ============================================================
-const neuro = {
-  fab: null, panel: null, messagesEl: null, inputEl: null,
-  fileInput: null, preview: null, thumb: null, name: null, removeBtn: null,
-  currentFile: null, initialized: false
-};
-
-function initNeuro() {
-  if (neuro.initialized) return;
-  neuro.initialized = true;
-  
-  neuro.fab = document.getElementById('neuro-fab');
-  neuro.panel = document.getElementById('neuro-panel');
-  neuro.messagesEl = document.getElementById('neuro-messages');
-  neuro.inputEl = document.getElementById('neuro-input');
-  neuro.fileInput = document.getElementById('neuro-file-input');
-  neuro.preview = document.getElementById('neuro-image-preview');
-  neuro.thumb = document.getElementById('neuro-image-thumb');
-  neuro.name = document.getElementById('neuro-image-name');
-  neuro.removeBtn = document.getElementById('neuro-image-remove');
-
-  neuro.fab.addEventListener('click', () => toggleNeuro());
-  document.getElementById('neuro-close').addEventListener('click', () => toggleNeuro(false));
-
-  neuro.fileInput.addEventListener('change', () => {
-    const f = neuro.fileInput.files[0];
-    if (!f) return;
-    neuro.currentFile = f;
-    neuro.thumb.src = URL.createObjectURL(f);
-    neuro.name.textContent = f.name;
-    neuro.preview.classList.remove('hidden');
-    neuro.fileInput.value = '';
-  });
-  
-  neuro.removeBtn.addEventListener('click', () => {
-    neuro.currentFile = null;
-    neuro.preview.classList.add('hidden');
-    neuro.thumb.src = '';
-  });
-
-  document.getElementById('neuro-send').addEventListener('click', sendNeuro);
-  neuro.inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendNeuro();
-    }
-  });
-}
-
-function toggleNeuro(show) {
-  if (show === undefined) neuro.panel.classList.toggle('hidden');
-  else if (show) neuro.panel.classList.remove('hidden');
-  else neuro.panel.classList.add('hidden');
-  if (!neuro.panel.classList.contains('hidden')) neuro.inputEl.focus();
-}
-
-function addNeuroMessage(text, role = 'user') {
-  const div = document.createElement('div');
-  div.className = role === 'user'
-    ? 'bg-blue-100 text-blue-900 rounded-xl px-3 py-2 ml-8'
-    : role === 'assistant'
-      ? 'bg-white border border-gray-200 text-gray-800 rounded-xl px-3 py-2 mr-8 whitespace-pre-wrap'
-      : 'text-gray-500 italic text-xs';
-  div.textContent = text;
-  neuro.messagesEl.appendChild(div);
-  neuro.messagesEl.scrollTop = neuro.messagesEl.scrollHeight;
-  return div;
-}
-
-async function sendNeuro() {
-  const text = neuro.inputEl.value.trim();
-  if (!text && !neuro.currentFile) return;
-
-  const userMsg = addNeuroMessage(text || '[фото]', 'user');
-  neuro.inputEl.value = '';
-
-  if (neuro.currentFile) {
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(neuro.currentFile);
-    img.className = 'mt-2 rounded-lg max-h-32 object-cover';
-    userMsg.appendChild(img);
-  }
-
-  const fileToSend = neuro.currentFile;
-  neuro.currentFile = null;
-  neuro.preview.classList.add('hidden');
-  neuro.thumb.src = '';
-
-  const loading = addNeuroMessage('Нейротёма думает…', 'system');
-
-  try {
-    if (typeof puter === 'undefined') {
-      throw new Error('Puter.js не загрузился. Проверь интернет.');
-    }
-
-    let response;
-    if (fileToSend) {
-      response = await puter.ai.chat(text || 'Что на этом фото? Если это задание ЕГЭ — проверь.', fileToSend, { model: 'gpt-4o-mini' });
-    } else {
-      response = await puter.ai.chat(text, { model: 'gpt-4o-mini' });
-    }
-
-    loading.remove();
-
-    let answer = '';
-    if (typeof response === 'string') answer = response;
-    else if (response?.message?.content) answer = response.message.content;
-    else if (response?.text) answer = response.text;
-    else answer = JSON.stringify(response);
-
-    addNeuroMessage(answer, 'assistant');
-  } catch (err) {
-    loading.remove();
-    console.error(err);
-    let msg = 'Не удалось получить ответ. ';
-    if (err.message && /auth|login|sign/i.test(err.message)) {
-      msg += 'Похоже, нужно войти в аккаунт Puter. Попробуй отправить ещё раз.';
-    } else {
-      msg += err.message || 'Попробуй позже.';
-    }
-    addNeuroMessage(msg, 'system');
-  }
-}
-
-// Функции вызова Нейротёмы из заданий
-function askNeuroMap() {
-  initNeuro();
-  toggleNeuro(true);
-  const topic = document.getElementById('map-topic-title').textContent;
-  neuro.inputEl.value = `Объясни тему по географии: ${topic}. Подскажи, как лучше запомнить, где находятся эти объекты на карте?`;
-  neuro.inputEl.focus();
-}
-
-function askNeuroQuiz() {
-  initNeuro();
-  toggleNeuro(true);
-  const q = document.getElementById('q9-industry').textContent;
-  neuro.inputEl.value = `Помоги разобраться с заданием 9 ЕГЭ по географии. Отрасль: ${q}. Какой регион или страна точно НЕ подходит и почему?`;
-  neuro.inputEl.focus();
-}
-
-function askNeuroIndustryMap() {
-  initNeuro();
-  toggleNeuro(true);
-  const industry = document.getElementById('industry-select').value;
-  neuro.inputEl.value = `Расскажи подробнее про размещение отрасли: ${industry} в ${indCurrentRegion === 'russia' ? 'России' : 'Мире'}. Какие главные центры нужно знать?`;
-  neuro.inputEl.focus();
-}
-
-// Инициализация при загрузке
-loadStats();
-switchRegion('russia');
-initNeuro();
-</script>
+<body class="min-h-screen p-4">
+
+    <header class="bg-white shadow-sm border-b border-gray-200 mb-6">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="index.html" class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                <span>←</span> На главную
+            </a>
+            <h1 class="text-lg font-bold text-gray-800">Задание 27</h1>
+            <div class="w-16"></div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto">
+        <!-- Переключатель режимов -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="switchMode('placement')" id="btn-mode-placement" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer">🏭 Факторы размещения</button>
+            <button onclick="switchMode('erosion')" id="btn-mode-erosion" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer">🌊 Эрозия почв</button>
+        </div>
+
+        <div id="quiz-container">
+            <!-- Сюда рендерится вопрос -->
+        </div>
+        <button id="btn-next" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4 shadow hidden border-none cursor-pointer">
+            Следующий вопрос →
+        </button>
+    </main>
+
+    <script>
+        // ============================================================
+        // БАЗЫ ВОПРОСОВ
+        // ============================================================
+        
+        // 1. Факторы размещения производства
+        const PLACEMENT_DB = [
+            {
+                industry: "Выплавка первичного алюминия (например, в Братске)",
+                correct: ["Энергетический", "Сырьевой"],
+                explanation: "Алюминиевое производство очень энергоёмкое (требует много электроэнергии) и материалоёмкое (нужны бокситы/нефелины). Поэтому заводы строят рядом с крупными ГЭС и источниками сырья."
+            },
+            {
+                industry: "Целлюлозно-бумажное производство (ЦБК в Архангельске)",
+                correct: ["Водный", "Сырьевой", "Транспортный"],
+                explanation: "Для ЦБК нужны огромные объёмы воды (водный фактор) и близость к лесным ресурсам (сырьевой). Также важна возможность вывоза готовой продукции (транспортный)."
+            },
+            {
+                industry: "Нефтехимия (производство пластмасс в Тобольске)",
+                correct: ["Сырьевой", "Водный", "Энергетический"],
+                explanation: "Нефтехимия привязана к сырью (попутный газ, нефть), требует много воды для охлаждения и энергии."
+            },
+            {
+                industry: "Чёрная металлургия (полный цикл в Магнитогорске)",
+                correct: ["Сырьевой", "Топливный", "Водный", "Транспортный"],
+                explanation: "Классический набор для металлургии: железная руда (сырьё), коксующийся уголь (топливо), вода для охлаждения, и выгодное транспортное положение."
+            },
+            {
+                industry: "Автомобилестроение (сборка в Санкт-Петербурге)",
+                correct: ["Потребительский", "Транспортный", "Трудовой"],
+                explanation: "Автосборка ориентирована на рынки сбыта (потребительский), удобную логистику для комплектующих (транспортный) и квалифицированную рабочую силу (трудовой)."
+            },
+            {
+                industry: "Производство калийных удобрений (Соликамск)",
+                correct: ["Сырьевой"],
+                explanation: "Это сырьевое производство, которое жёстко привязано к местам добычи калийных солей. Транспортировать сырьё на большие расстояния невыгодно."
+            },
+            {
+                industry: "Тяжёлое машиностроение (Екатеринбург)",
+                correct: ["Сырьевой", "Трудовой", "Потребительский"],
+                explanation: "Металлургическое оборудование тяжело перевозить, поэтому заводы размещают близко к металлургическим базам (сырьё) и к потребителям (горнодобывающие предприятия)."
+            },
+            {
+                industry: "Судостроение (Санкт-Петербург)",
+                correct: ["Трудовой", "Транспортный"],
+                explanation: "Судостроение требует большого количества квалифицированных рабочих (трудовой) и выхода к судоходным путям (транспортный)."
+            },
+            {
+                industry: "Сахарная промышленность (Краснодарский край)",
+                correct: ["Сырьевой", "Потребительский"],
+                explanation: "Сахарная свёкла — скоропортящееся сырьё, поэтому заводы строят рядом с полями (сырьевой). Готовый сахар тоже выгодно производить ближе к потребителю."
+            },
+            {
+                industry: "Производство микрочипов (Тайвань, Южная Корея)",
+                correct: ["Наукоёмкий", "Трудовой"],
+                explanation: "Это высокотехнологичное производство, требующее научных кадров (наукоёмкий) и высококвалифицированных специалистов (трудовой)."
+            }
+        ];
+
+        // 2. Эрозия почв
+        const EROSION_DB = [
+            {
+                question: "На каком участке (А или В) водная эрозия почв будет проявляться сильнее?",
+                correct: ["Участок А распахан, а участок В покрыт лесом", "Участок А расположен на более крутом склоне"],
+                explanation: "Водная эрозия сильнее там, где нет растительности, которая задерживает воду (распаханное поле), и где больше уклон поверхности (крутой склон)."
+            },
+            {
+                question: "Определите, на каком из участков (1 или 2) наиболее вероятно развитие оврагов.",
+                correct: ["Участок 1 имеет больший уклон поверхности", "На участке 1 отсутствует растительность (распахан)"],
+                explanation: "Овраги образуются на крутых склонах при отсутствии растительности, так как потоки воды быстро размывают почву."
+            },
+            {
+                question: "Какой из двух участков (А или В) меньше подвержен водной эрозии?",
+                correct: ["Участок В покрыт травянистой растительностью", "Участок В находится на выровненной поверхности (водоразделе)"],
+                explanation: "Растительность корнями скрепляет почву, а на ровной поверхности вода не стекает с большой скоростью, поэтому эрозия минимальна."
+            },
+            {
+                question: "В каком из пунктов (1 или 2) будет наблюдаться более сильный смыв почвы?",
+                correct: ["Пункт 1 расположен на склоне южной экспозиции (быстрее тает снег)", "Пункт 1 распахан, а пункт 2 занят лугом"],
+                explanation: "На южном склоне снег тает быстрее, вода активнее стекает. Отсутствие растительности на распаханном поле способствует смыву."
+            },
+            {
+                question: "На каком из участков (А или В) вероятность водной эрозии минимальна?",
+                correct: ["Участок В находится в пойме реки (ровная поверхность)", "Участок В покрыт лесной растительностью"],
+                explanation: "В пойме реки уклон минимален, а лесная подстилка отлично впитывает воду и предотвращает размыв."
+            }
+        ];
+
+        const ALL_PLACEMENT_FACTORS = [
+            "Сырьевой", "Топливный", "Энергетический", "Водный", "Трудовой", 
+            "Транспортный", "Потребительский", "Наукоёмкий", "Экологический"
+        ];
+
+        // ============================================================
+        // ЛОГИКА
+        // ============================================================
+        let currentMode = 'placement'; // 'placement' или 'erosion'
+        let currentIndex = 0;
+        let selectedFactors = new Set();
+        let isAnswered = false;
+
+        const container = document.getElementById('quiz-container');
+        const btnNext = document.getElementById('btn-next');
+
+        function switchMode(mode) {
+            currentMode = mode;
+            currentIndex = 0;
+            
+            // Обновляем стили кнопок
+            document.getElementById('btn-mode-placement').className = mode === 'placement' 
+                ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' 
+                : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
+            document.getElementById('btn-mode-erosion').className = mode === 'erosion' 
+                ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' 
+                : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
+            
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            selectedFactors.clear();
+            isAnswered = false;
+            btnNext.classList.add('hidden');
+
+            if (currentMode === 'placement') {
+                renderPlacementQuestion();
+            } else {
+                renderErosionQuestion();
+            }
+        }
+
+        function renderPlacementQuestion() {
+            const q = PLACEMENT_DB[currentIndex];
+            const shuffled = shuffle([...ALL_PLACEMENT_FACTORS]);
+
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+                    <div class="text-xs uppercase tracking-wide text-gray-400 mb-2">Вопрос ${currentIndex + 1} из ${PLACEMENT_DB.length}</div>
+                    <div class="text-lg md:text-xl font-semibold text-gray-900 leading-relaxed mb-6">${q.industry}</div>
+                    <div class="text-xs uppercase tracking-wide text-gray-400 mb-3">Выберите факторы, которые определили размещение (минимум 2):</div>
+                    <div class="space-y-3">
+                        ${shuffled.map(f => `
+                            <button data-factor="${f}" class="option-btn w-full text-left px-5 py-3 rounded-xl border font-medium text-gray-700">${f}</button>
+                        `).join('')}
+                    </div>
+                    <div id="explanation" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-900 hidden"></div>
+                </div>
+            `;
+
+            document.querySelectorAll('[data-factor]').forEach(btn => {
+                btn.addEventListener('click', () => togglePlacementFactor(btn));
+            });
+        }
+
+        function renderErosionQuestion() {
+            const q = EROSION_DB[currentIndex];
+            
+            // Собираем все уникальные варианты ответов для этого вопроса + добавляем 1-2 ложных
+            const fakeOptions = ["Участок находится в зоне многолетней мерзлоты", "Участок сложен водопроницаемыми породами"];
+            const allOptions = shuffle([...q.correct, ...fakeOptions]);
+
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+                    <div class="text-xs uppercase tracking-wide text-gray-400 mb-2">Вопрос ${currentIndex + 1} из ${EROSION_DB.length}</div>
+                    <div class="text-lg md:text-xl font-semibold text-gray-900 leading-relaxed mb-6">${q.question}</div>
+                    <div class="text-xs uppercase tracking-wide text-gray-400 mb-3">Выберите два верных довода:</div>
+                    <div class="space-y-3">
+                        ${allOptions.map(f => `
+                            <button data-factor="${f}" class="option-btn w-full text-left px-5 py-3 rounded-xl border font-medium text-gray-700">${f}</button>
+                        `).join('')}
+                    </div>
+                    <div id="explanation" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-900 hidden"></div>
+                </div>
+            `;
+
+            document.querySelectorAll('[data-factor]').forEach(btn => {
+                btn.addEventListener('click', () => toggleErosionFactor(btn, q));
+            });
+        }
+
+        function togglePlacementFactor(btn) {
+            if (isAnswered) return;
+            const factor = btn.getAttribute('data-factor');
+            if (selectedFactors.has(factor)) {
+                selectedFactors.delete(factor);
+                btn.classList.remove('selected');
+            } else {
+                selectedFactors.add(factor);
+                btn.classList.add('selected');
+            }
+            if (selectedFactors.size >= 2) {
+                checkPlacementAnswer();
+            }
+        }
+
+        function checkPlacementAnswer() {
+            isAnswered = true;
+            const q = PLACEMENT_DB[currentIndex];
+            const correctSet = new Set(q.correct);
+            let isAllCorrect = true;
+
+            document.querySelectorAll('[data-factor]').forEach(btn => {
+                const factor = btn.getAttribute('data-factor');
+                btn.disabled = true;
+                if (correctSet.has(factor)) {
+                    btn.classList.add('correct');
+                } else if (selectedFactors.has(factor)) {
+                    btn.classList.add('wrong');
+                    isAllCorrect = false;
+                }
+            });
+
+            const expBox = document.getElementById('explanation');
+            expBox.innerHTML = `<strong>${isAllCorrect ? '✅ Верно!' : '❌ Есть ошибки.'}</strong> ${q.explanation}`;
+            expBox.className = `mt-6 p-4 rounded-xl text-sm ${isAllCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+            expBox.classList.remove('hidden');
+            btnNext.classList.remove('hidden');
+        }
+
+        function toggleErosionFactor(btn, q) {
+            if (isAnswered) return;
+            const factor = btn.getAttribute('data-factor');
+            
+            // В эрозии выбираем строго 2 варианта
+            if (selectedFactors.has(factor)) {
+                selectedFactors.delete(factor);
+                btn.classList.remove('selected');
+            } else {
+                if (selectedFactors.size < 2) {
+                    selectedFactors.add(factor);
+                    btn.classList.add('selected');
+                }
+            }
+
+            if (selectedFactors.size === 2) {
+                checkErosionAnswer(q);
+            }
+        }
+
+        function checkErosionAnswer(q) {
+            isAnswered = true;
+            const correctSet = new Set(q.correct);
+            let isAllCorrect = true;
+
+            document.querySelectorAll('[data-factor]').forEach(btn => {
+                const factor = btn.getAttribute('data-factor');
+                btn.disabled = true;
+                if (correctSet.has(factor)) {
+                    btn.classList.add('correct');
+                } else if (selectedFactors.has(factor)) {
+                    btn.classList.add('wrong');
+                    isAllCorrect = false;
+                }
+            });
+
+            const expBox = document.getElementById('explanation');
+            expBox.innerHTML = `<strong>${isAllCorrect ? '✅ Верно!' : '❌ Есть ошибки.'}</strong> ${q.explanation}`;
+            expBox.className = `mt-6 p-4 rounded-xl text-sm ${isAllCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+            expBox.classList.remove('hidden');
+            btnNext.classList.remove('hidden');
+        }
+
+        function shuffle(array) {
+            const a = [...array];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        btnNext.addEventListener('click', () => {
+            currentIndex++;
+            const db = currentMode === 'placement' ? PLACEMENT_DB : EROSION_DB;
+            
+            if (currentIndex >= db.length) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+                        <div class="text-5xl mb-4">🎉</div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Вопросы пройдены!</h2>
+                        <p class="text-gray-600 mb-6">Ты отлично потренировался.</p>
+                        <button onclick="location.reload()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl">Начать заново</button>
+                    </div>
+                `;
+                btnNext.classList.add('hidden');
+            } else {
+                renderQuestion();
+            }
+        });
+
+        // Инициализация
+        switchMode('placement');
+    </script>
 </body>
 </html>
