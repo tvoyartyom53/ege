@@ -3,25 +3,34 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="google" content="notranslate">
 <title>География ЕГЭ | Тренажёр</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; }
-  #map { height: 100vh; width: 100%; background: #d0d8e0; z-index: 1; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
   
-  /* Скрытие экранов */
-  .screen { display: none; width: 100%; height: 100%; }
-  .screen.active { display: flex; flex-direction: column; }
-  .screen.absolute-active { display: block; position: absolute; inset: 0; }
+  /* Карта */
+  #map { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
+  
+  /* Система экранов (надёжная и простая) */
+  .screen { display: none; position: absolute; inset: 0; overflow-y: auto; background: #f0f4f8; }
+  .screen.active { display: block; }
+  
+  /* Экраны, где контент по центру (главное меню, меню задания 9) */
+  #screen-main.active, #screen-task9-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
 
-  /* Стили для карточек */
-  .menu-card { background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.2s; border: 2px solid transparent; }
+  /* Карточки меню */
+  .menu-card { 
+    background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.2s; border: 2px solid transparent; 
+    width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box;
+  }
   .menu-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); border-color: #3b82f6; }
   
   /* Стили для квиза (Задание 9) */
-  .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; }
+  .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
   .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; transform: scale(0.98); }
   .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
   .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; pointer-events: none; opacity: 0.7; }
@@ -30,20 +39,20 @@
 </head>
 <body>
 
-<!-- ================= ЭКРАН 1: ГЛАВНОЕ МЕНЮ ГЕОГРАФИИ ================= -->
-<div id="screen-main" class="screen active items-center justify-center p-4">
+<!-- ЭКРАН 1: ГЛАВНОЕ МЕНЮ -->
+<div id="screen-main" class="screen active">
   <div class="w-full max-w-md">
     <a href="index.html" class="text-blue-600 font-bold mb-6 inline-block hover:underline">← На главную</a>
     <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">🌍 География ЕГЭ</h1>
     
-    <div class="flex flex-col gap-4">
-      <div onclick="openTask4Menu()" class="menu-card w-full bg-white border-l-4 border-l-blue-500">
+    <div class="flex flex-col">
+      <div onclick="showScreen('screen-task4-menu')" class="menu-card border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🗺️</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 4</h2>
         <p class="text-sm text-gray-500 mt-1">Карты России и Мира</p>
       </div>
       
-      <div onclick="openTask9Menu()" class="menu-card w-full bg-white border-l-4 border-l-green-500">
+      <div onclick="showScreen('screen-task9-menu')" class="menu-card border-l-4 border-l-green-500">
         <div class="text-4xl mb-3">🏭</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
         <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
@@ -52,27 +61,27 @@
   </div>
 </div>
 
-<!-- ================= ЭКРАН 2: МЕНЮ КАРТ (Задание 4) ================= -->
-<div id="screen-task4-menu" class="screen overflow-y-auto p-4 bg-gray-50">
+<!-- ЭКРАН 2: МЕНЮ КАРТ (Задание 4) -->
+<div id="screen-task4-menu" class="screen p-4">
   <div class="max-w-3xl mx-auto w-full">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline">← Назад</button>
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     
     <div class="flex gap-2 mb-6">
-      <button onclick="switchRegion('russia')" id="btn-reg-russia" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow">🇷🇺 Россия</button>
-      <button onclick="switchRegion('world')" id="btn-reg-world" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow">🌍 Мир</button>
+      <button onclick="switchRegion('russia')" id="btn-reg-russia" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer">🇷🇺 Россия</button>
+      <button onclick="switchRegion('world')" id="btn-reg-world" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer">🌍 Мир</button>
     </div>
 
     <div id="map-topics-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10">
-      <!-- Сюда рендерятся темы -->
+      <!-- Темы добавляются через JS -->
     </div>
   </div>
 </div>
 
-<!-- ================= ЭКРАН 3: ИГРА КАРТЫ ================= -->
-<div id="screen-task4-play" class="screen relative">
+<!-- ЭКРАН 3: ИГРА КАРТЫ (Задание 4) -->
+<div id="screen-task4-play" class="screen">
   <div id="map"></div>
   
-  <button onclick="closeMapPlay()" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm">← К темам</button>
+  <button onclick="showScreen('screen-task4-menu')" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer">← К темам</button>
   
   <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-6 py-3 rounded-xl shadow-lg text-center w-[90%] max-w-sm pointer-events-none">
     <div id="map-topic-title" class="text-xs text-gray-500 uppercase tracking-wide mb-1">Загрузка...</div>
@@ -84,21 +93,20 @@
   </div>
 </div>
 
-<!-- ================= ЭКРАН 4: МЕНЮ ЗАДАНИЯ 9 ================= -->
-<div id="screen-task9-menu" class="screen items-center justify-center p-4 bg-gray-50">
+<!-- ЭКРАН 4: МЕНЮ ЗАДАНИЯ 9 -->
+<div id="screen-task9-menu" class="screen">
   <div class="w-full max-w-md">
-    <!-- Исправлен тег </a> на </button> -->
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline">← Назад</button>
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏭 Задание 9</h1>
     
-    <div class="flex flex-col gap-4">
-      <div onclick="openRefMenu()" class="menu-card w-full border-l-4 border-l-yellow-500">
+    <div class="flex flex-col">
+      <div onclick="openRefMenu()" class="menu-card border-l-4 border-l-yellow-500">
         <div class="text-4xl mb-3">📚</div>
         <h2 class="text-xl font-bold text-gray-800">Справочник</h2>
         <p class="text-sm text-gray-500 mt-1">Выучить все топы стран и регионов</p>
       </div>
       
-      <div onclick="startQuizMenu()" class="menu-card w-full border-l-4 border-l-blue-500">
+      <div onclick="startQuizMenu()" class="menu-card border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🎮</div>
         <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
         <p class="text-sm text-gray-500 mt-1">Проверить знания в игровом формате</p>
@@ -107,29 +115,29 @@
   </div>
 </div>
 
-<!-- ================= ЭКРАН 5: СПРАВОЧНИК 9 ================= -->
-<div id="screen-task9-ref" class="screen overflow-y-auto p-4 bg-gray-50">
+<!-- ЭКРАН 5: СПРАВОЧНИК 9 -->
+<div id="screen-task9-ref" class="screen p-4">
   <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline">← Назад</button>
+    <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     
     <div class="flex gap-2 mb-6">
-      <button onclick="switchRefTab('russia')" id="btn-ref-ru" class="flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow">🇷🇺 Россия</button>
-      <button onclick="switchRefTab('world')" id="btn-ref-world" class="flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow">🌍 Мир</button>
+      <button onclick="switchRefTab('russia')" id="btn-ref-ru" class="flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
+      <button onclick="switchRefTab('world')" id="btn-ref-world" class="flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
     </div>
     
     <div id="ref-content" class="space-y-4 pb-10"></div>
   </div>
 </div>
 
-<!-- ================= ЭКРАН 6: ИГРА 9 ================= -->
-<div id="screen-task9-play" class="screen overflow-y-auto p-4 bg-gray-50">
+<!-- ЭКРАН 6: ИГРА 9 -->
+<div id="screen-task9-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
     
     <div class="flex justify-between items-center mb-4">
-      <button onclick="showScreen('screen-task9-menu')" class="text-gray-500 hover:text-gray-800 text-sm font-bold">← В меню</button>
+      <button onclick="showScreen('screen-task9-menu')" class="text-gray-500 hover:text-gray-800 text-sm font-bold bg-transparent border-none cursor-pointer">← В меню</button>
       <div class="flex gap-2">
-        <button onclick="startQuiz('russia')" id="btn-q9-ru" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow">🇷🇺 Россия</button>
-        <button onclick="startQuiz('world')" id="btn-q9-world" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow">🌍 Мир</button>
+        <button onclick="startQuiz('russia')" id="btn-q9-ru" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
+        <button onclick="startQuiz('world')" id="btn-q9-world" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
       </div>
     </div>
 
@@ -144,7 +152,7 @@
       <div id="q9-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
     </div>
 
-    <button id="q9-btn-next" onclick="nextQ9()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden">Дальше →</button>
+    <button id="q9-btn-next" onclick="nextQ9()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
   </div>
 </div>
 
@@ -154,30 +162,8 @@
 //  ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
 // ============================================================
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active', 'absolute-active');
-    s.style.display = 'none';
-  });
-  
-  const target = document.getElementById(id);
-  if (id === 'screen-task4-play') {
-    target.style.display = 'block';
-    target.classList.add('absolute-active');
-  } else {
-    target.style.display = 'flex';
-    target.classList.add('active');
-    if(target.classList.contains('overflow-y-auto')) {
-      target.style.display = 'block';
-    }
-  }
-}
-
-function openTask4Menu() {
-  showScreen('screen-task4-menu');
-}
-
-function openTask9Menu() {
-  showScreen('screen-task9-menu');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
 // ============================================================
@@ -241,8 +227,8 @@ function getMapIcon(color = 'blue') {
 
 function switchRegion(region) {
   mapCurrentRegion = region;
-  document.getElementById('btn-reg-russia').className = region === 'russia' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow';
-  document.getElementById('btn-reg-world').className = region === 'world' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow';
+  document.getElementById('btn-reg-russia').className = region === 'russia' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
+  document.getElementById('btn-reg-world').className = region === 'world' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
 
   const grid = document.getElementById('map-topics-grid');
   grid.innerHTML = '';
@@ -251,6 +237,8 @@ function switchRegion(region) {
   for (const [id, data] of Object.entries(topics)) {
     const card = document.createElement('div');
     card.className = 'bg-white p-4 rounded-xl text-center shadow-sm border border-gray-100 font-semibold text-gray-700 hover:bg-blue-50 transition cursor-pointer';
+    card.style.width = '100%';
+    card.style.display = 'block';
     card.textContent = data.name;
     card.onclick = () => startMapTopic(region, id);
     grid.appendChild(card);
@@ -288,10 +276,6 @@ function startMapTopic(region, topicId) {
     mapMarkers.push(marker);
   }
   nextMapQ();
-}
-
-function closeMapPlay() {
-  showScreen('screen-task4-menu');
 }
 
 function nextMapQ() {
@@ -386,15 +370,15 @@ function openRefMenu() {
 }
 
 function switchRefTab(region) {
-  document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow';
-  document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow';
+  document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   
   const container = document.getElementById('ref-content');
   container.innerHTML = '';
   
   QUIZ_DB[region].forEach(item => {
     container.innerHTML += `
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
         <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-800">${item.name}</div>
         <div class="p-4 text-sm text-gray-700">
           ${item.correct.join(', ')}
@@ -411,8 +395,8 @@ function startQuizMenu() {
 
 function startQuiz(region) {
   currentQuizRegion = region;
-  document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow';
-  document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow';
+  document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
+  document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   nextQ9();
 }
 
@@ -455,7 +439,7 @@ function nextQ9() {
   
   currentOptions.forEach((opt, idx) => {
     const btn = document.createElement('button');
-    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white';
+    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer';
     btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
     btn.onclick = () => toggleQ9Option(idx, btn);
     optContainer.appendChild(btn);
