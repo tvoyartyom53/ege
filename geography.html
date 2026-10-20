@@ -12,46 +12,26 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f0f4f8; margin: 0; padding: 0; }
-  
-  /* Шапка */
   header { position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 3000; background: #fff; border-bottom: 1px solid #e5e7eb; }
-  
-  /* Контейнеры экранов */
   .screen { display: none; position: absolute; top: 64px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: #f0f4f8; z-index: 10; }
   .screen.active { display: block; z-index: 20; }
-  
-  /* Экраны по центру */
-  #screen-main.active, #screen-task9-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-
-  /* Карты */
+  #screen-main.active, #screen-task9-menu.active, #screen-task12-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   #map, #map-industries { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
   #screen-task4-play, #screen-industry-map { overflow: hidden; }
-
-  /* Карточки меню */
-  .menu-card { 
-    background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; 
-    width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box;
-  }
+  .menu-card { background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box; }
   .menu-card:active { transform: scale(0.98); }
   .menu-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
-  
-  /* Квиз */
   .option-btn { transition: all 0.15s ease; border: 2px solid #e5e7eb; background: #fff; }
   .option-btn.selected { background-color: #e0f2fe; border-color: #3b82f6; color: #1e3a8a; }
   .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; pointer-events: none; }
   .option-btn.wrong { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; pointer-events: none; opacity: 0.7; }
   .option-btn:disabled { cursor: not-allowed; }
-  
   select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
-  
   #neuro-panel { display: flex; }
   #neuro-panel.hidden { display: none; }
 </style>
 </head>
 <body>
-
-<!-- ШАПКА -->
 <header>
   <div class="max-w-4xl mx-auto px-4 h-full flex items-center justify-between">
     <a href="index.html" class="text-xl font-bold text-blue-700">🎯 ЕГЭ-подготовка</a>
@@ -61,8 +41,6 @@
     </nav>
   </div>
 </header>
-
-<!-- ЭКРАН 1: ГЛАВНОЕ МЕНЮ -->
 <div id="screen-main" class="screen active">
   <div class="w-full max-w-md">
     <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">🌍 География ЕГЭ</h1>
@@ -77,11 +55,14 @@
         <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
         <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
       </button>
+      <button onclick="showScreen('screen-task12-menu')" class="menu-card border-l-4 border-l-purple-500">
+        <div class="text-4xl mb-3">📖</div>
+        <h2 class="text-xl font-bold text-gray-800">Задание 12</h2>
+        <p class="text-sm text-gray-500 mt-1">Термины и определения</p>
+      </button>
     </div>
   </div>
 </div>
-
-<!-- ЭКРАН 2: МЕНЮ КАРТ -->
 <div id="screen-task4-menu" class="screen p-4">
   <div class="max-w-3xl mx-auto w-full">
     <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
@@ -92,8 +73,6 @@
     <div id="map-topics-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3 pb-10"></div>
   </div>
 </div>
-
-<!-- ЭКРАН 3: КАРТА 4 ЗАДАНИЯ -->
 <div id="screen-task4-play" class="screen">
   <div id="map"></div>
   <button onclick="showScreen('screen-task4-menu')" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer">← К темам</button>
@@ -104,13 +83,10 @@
   <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-5 py-2 rounded-full shadow-lg text-sm flex gap-4 pointer-events-none whitespace-nowrap">
     ✅ <span id="map-correct" class="text-green-600 font-bold">0</span> | ❌ <span id="map-wrong" class="text-red-600 font-bold">0</span> | 📌 Осталось: <span id="map-rem" class="font-bold">0</span>
   </div>
-  <!-- Кнопка вызова Нейронки для карты -->
   <button onclick="askNeuroMap()" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer">
     🧠 Спросить Нейротёму
   </button>
 </div>
-
-<!-- ЭКРАН 4: МЕНЮ 9 ЗАДАНИЯ -->
 <div id="screen-task9-menu" class="screen">
   <div class="w-full max-w-md">
     <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
@@ -133,10 +109,7 @@
       </button>
     </div>
   </div>
-</div>
-
-<!-- ЭКРАН 5: СПРАВОЧНИК 9 -->
-<div id="screen-task9-ref" class="screen p-4">
+</div><div id="screen-task9-ref" class="screen p-4">
   <div class="max-w-2xl mx-auto">
     <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <div class="flex gap-2 mb-6">
@@ -146,8 +119,6 @@
     <div id="ref-content" class="space-y-4 pb-10"></div>
   </div>
 </div>
-
-<!-- ЭКРАН 6: ИГРА 9 -->
 <div id="screen-task9-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
     <div class="flex justify-between items-center mb-4">
@@ -163,17 +134,11 @@
       <h2 id="q9-industry" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
       <div id="q9-options" class="space-y-3"></div>
       <div id="q9-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
-      
-      <!-- Кнопка вызова Нейронки для квиза -->
-      <button onclick="askNeuroQuiz()" class="mt-4 text-xs text-blue-600 hover:text-blue-800 underline self-center block mx-auto">
-        🧠 Спросить Нейротёму
-      </button>
+      <button onclick="askNeuroQuiz()" class="mt-4 text-xs text-blue-600 hover:text-blue-800 underline self-center block mx-auto">🧠 Спросить Нейротёму</button>
     </div>
     <button id="q9-btn-next" onclick="nextQ9()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
   </div>
 </div>
-
-<!-- ЭКРАН 7: КАРТА ОТРАСЛЕЙ -->
 <div id="screen-industry-map" class="screen">
   <div id="map-industries"></div>
   <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
@@ -186,50 +151,74 @@
       <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Выберите отрасль</label>
       <select id="industry-select" onchange="drawZones()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"></select>
     </div>
-    <!-- Кнопка вызова Нейронки для карты отраслей -->
-    <button onclick="askNeuroIndustryMap()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer mt-1 self-start">
-      🧠 Спросить про отрасль
-    </button>
+    <button onclick="askNeuroIndustryMap()" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border border-blue-300 cursor-pointer mt-1 self-start">🧠 Спросить про отрасль</button>
   </div>
 </div>
-
-<!-- ЭКРАН 8: СТАТИСТИКА -->
+<!-- НОВОЕ: ЗАДАНИЕ 12 -->
+<div id="screen-task12-menu" class="screen">
+  <div class="w-full max-w-md">
+    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📖 Задание 12</h1>
+    <div class="flex flex-col">
+      <button onclick="showScreen('screen-task12-ref')" class="menu-card border-l-4 border-l-purple-500">
+        <div class="text-4xl mb-3">📚</div>
+        <h2 class="text-xl font-bold text-gray-800">Справочник</h2>
+        <p class="text-sm text-gray-500 mt-1">Термины и их определения</p>
+      </button>
+      <button onclick="startTask12Quiz()" class="menu-card border-l-4 border-l-pink-500">
+        <div class="text-4xl mb-3">🎮</div>
+        <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
+        <p class="text-sm text-gray-500 mt-1">Проверить знание терминов</p>
+      </button>
+    </div>
+  </div>
+</div>
+<div id="screen-task12-ref" class="screen p-4">
+  <div class="max-w-2xl mx-auto">
+    <button onclick="showScreen('screen-task12-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <h1 class="text-xl font-bold text-gray-800 mb-6">Термины и определения</h1>
+    <div id="t12-ref-content" class="space-y-4 pb-10"></div>
+  </div>
+</div>
+<div id="screen-task12-play" class="screen p-4">
+  <div class="max-w-2xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-4">
+      <button onclick="showScreen('screen-task12-menu')" class="text-gray-500 hover:text-gray-800 text-sm font-bold bg-transparent border-none cursor-pointer">← В меню</button>
+      <div class="text-sm font-bold text-gray-600">Вопрос <span id="t12-q-num">1</span></div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden">
+      <div class="absolute top-0 left-0 h-1 bg-pink-500 w-full"></div>
+      <div class="text-xs text-pink-600 font-bold uppercase tracking-wider mb-2">Выберите правильное определение</div>
+      <h2 id="t12-term" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
+      <div id="t12-options" class="space-y-3"></div>
+      <div id="t12-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
+    </div>
+    <button id="t12-btn-next" onclick="nextTask12Q()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
+  </div>
+</div>
+<!-- СТАТИСТИКА -->
 <div id="screen-stats" class="screen p-4">
   <div class="max-w-2xl mx-auto">
     <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center mt-4">📊 Твой прогресс</h1>
-    
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
       <h2 class="text-lg font-bold text-gray-800 mb-4">🗺️ Задание 4 (Карты)</h2>
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm text-gray-600">Правильные ответы:</span>
-        <span class="text-green-600 font-bold text-xl" id="stat-map-correct">0</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span class="text-sm text-gray-600">Ошибки:</span>
-        <span class="text-red-600 font-bold text-xl" id="stat-map-wrong">0</span>
-      </div>
+      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-map-correct">0</span></div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-map-wrong">0</span></div>
     </div>
-
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
       <h2 class="text-lg font-bold text-gray-800 mb-4">🏭 Задание 9 (Отрасли)</h2>
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-sm text-gray-600">Правильные ответы:</span>
-        <span class="text-green-600 font-bold text-xl" id="stat-q9-correct">0</span>
-      </div>
-      <div class="flex justify-between items-center">
-        <span class="text-sm text-gray-600">Ошибки:</span>
-        <span class="text-red-600 font-bold text-xl" id="stat-q9-wrong">0</span>
-      </div>
+      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-q9-correct">0</span></div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-q9-wrong">0</span></div>
     </div>
-
-    <button onclick="resetStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">
-      Сбросить статистику
-    </button>
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">📖 Задание 12 (Термины)</h2>
+      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-q12-correct">0</span></div>
+      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-q12-wrong">0</span></div>
+    </div>
+    <button onclick="resetStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">Сбросить статистику</button>
   </div>
 </div>
-
-<!-- НЕЙРОТЁМА (Панель) -->
 <button id="neuro-fab" class="fixed bottom-6 right-6 z-[2500] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
 <div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2500] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
   <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
@@ -253,12 +242,7 @@
     <textarea id="neuro-input" rows="1" placeholder="Спроси что-нибудь…" class="flex-1 resize-none border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
     <button id="neuro-send" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 py-2 text-sm font-medium">➤</button>
   </div>
-</div>
-
-<script>
-// ============================================================
-//  ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
-// ============================================================
+</div><script>
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
@@ -268,47 +252,32 @@ function showScreen(id) {
     if (id === 'screen-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 250);
   }
 }
-
-// ============================================================
-//  СТАТИСТИКА
-// ============================================================
-let stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
-
+let stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0, q12Correct: 0, q12Wrong: 0 };
 function loadStats() {
   try {
     const saved = localStorage.getItem('geo_stats');
-    if (saved) stats = JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      stats = { ...stats, ...parsed };
+    }
   } catch(e) {}
 }
-
-function saveStats() {
-  localStorage.setItem('geo_stats', JSON.stringify(stats));
-}
-
+function saveStats() { localStorage.setItem('geo_stats', JSON.stringify(stats)); }
 function updateStatsDisplay() {
   document.getElementById('stat-map-correct').textContent = stats.mapCorrect;
   document.getElementById('stat-map-wrong').textContent = stats.mapWrong;
   document.getElementById('stat-q9-correct').textContent = stats.q9Correct;
   document.getElementById('stat-q9-wrong').textContent = stats.q9Wrong;
+  document.getElementById('stat-q12-correct').textContent = stats.q12Correct;
+  document.getElementById('stat-q12-wrong').textContent = stats.q12Wrong;
 }
-
-function openGeoStats() {
-  loadStats();
-  updateStatsDisplay();
-  showScreen('screen-stats');
-}
-
+function openGeoStats() { loadStats(); updateStatsDisplay(); showScreen('screen-stats'); }
 function resetStats() {
   if (confirm('Точно сбросить всю статистику?')) {
-    stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0 };
-    saveStats();
-    updateStatsDisplay();
+    stats = { mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0, q12Correct: 0, q12Wrong: 0 };
+    saveStats(); updateStatsDisplay();
   }
 }
-
-// ============================================================
-//  ДАННЫЕ КАРТ (ЗАДАНИЕ 4)
-// ============================================================
 const GEO_DATA = {
   russia: {
     center: [65, 95], zoom: 3,
@@ -343,32 +312,20 @@ const GEO_DATA = {
       "w_straits": { name: "Проливы", items: { "Па-де-Кале": [51, 1.5], "Ла-Манш": [50, -1.5], "Скагеррак": [57, 10], "Босфор": [41.1, 29.1], "Гибралтарский": [36, -5.4], "Магелланов": [-53.5, -70], "Дрейка": [-58, -70], "Торресов": [-10, 142], "Мозамбикский": [-20, 40], "Девисов": [65, -60], "Бассов": [-40, 147], "Кука": [-41, 174], "Дарданеллы": [40, 26], "Каттегат": [56, 11] }}
     }
   }
-};
-
-let map = null;
+};let map = null;
 let mapMarkers = [];
 let mapAvailable = [];
 let mapCurrentQ = null;
 let mapCorrect = 0, mapWrong = 0, mapIsAnswered = false;
 let mapCurrentRegion = 'russia';
-
 function getMapIcon(color = 'blue') {
-  const colors = {
-    blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    green: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
-  };
-  return L.icon({
-    iconUrl: colors[color], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-  });
+  const colors = { blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', green: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' };
+  return L.icon({ iconUrl: colors[color], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 }
-
 function switchRegion(region) {
   mapCurrentRegion = region;
   document.getElementById('btn-reg-russia').className = region === 'russia' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
   document.getElementById('btn-reg-world').className = region === 'world' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
-
   const grid = document.getElementById('map-topics-grid');
   grid.innerHTML = '';
   for (const [id, data] of Object.entries(GEO_DATA[region].topics)) {
@@ -379,13 +336,11 @@ function switchRegion(region) {
     grid.appendChild(card);
   }
 }
-
 function startMapTopic(region, topicId) {
   showScreen('screen-task4-play');
   const data = GEO_DATA[region];
   const topic = data.topics[topicId];
   document.getElementById('map-topic-title').textContent = topic.name;
-
   if (!map) {
     map = L.map('map', { zoomControl: false }).setView(data.center, data.zoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
@@ -393,14 +348,12 @@ function startMapTopic(region, topicId) {
     map.setView(data.center, data.zoom);
     map.eachLayer(l => { if (l instanceof L.Marker) map.removeLayer(l); });
   }
-
   setTimeout(() => map.invalidateSize(), 200);
   mapMarkers = [];
   mapCorrect = 0; mapWrong = 0; mapIsAnswered = false; mapCurrentQ = null;
   document.getElementById('map-correct').textContent = '0';
   document.getElementById('map-wrong').textContent = '0';
   mapAvailable = Object.keys(topic.items);
-
   for (const [name, coords] of Object.entries(topic.items)) {
     const marker = L.marker(coords, { icon: getMapIcon('blue') }).addTo(map);
     marker.on('click', () => handleMapClick(name, marker, topic.items));
@@ -408,7 +361,6 @@ function startMapTopic(region, topicId) {
   }
   nextMapQ();
 }
-
 function nextMapQ() {
   if (mapAvailable.length === 0) {
     document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
@@ -422,12 +374,10 @@ function nextMapQ() {
   document.getElementById('map-rem').textContent = mapAvailable.length;
   mapIsAnswered = false;
 }
-
 function handleMapClick(name, marker, items) {
   if (mapIsAnswered || !mapCurrentQ) return;
   const isCorrect = (name === mapCurrentQ);
   marker.setIcon(getMapIcon(isCorrect ? 'green' : 'red'));
-
   if (isCorrect) {
     mapCorrect++;
     stats.mapCorrect++;
@@ -443,29 +393,101 @@ function handleMapClick(name, marker, items) {
     });
     if (trueMarker) trueMarker.setIcon(getMapIcon('green'));
   }
-  
   saveStats();
   document.getElementById('map-correct').textContent = mapCorrect;
   document.getElementById('map-wrong').textContent = mapWrong;
   mapIsAnswered = true;
-
   const idx = mapAvailable.indexOf(mapCurrentQ);
   if (idx !== -1) mapAvailable.splice(idx, 1);
   document.getElementById('map-rem').textContent = mapAvailable.length;
-
   if (mapAvailable.length > 0) {
     setTimeout(nextMapQ, 2000);
   } else {
     document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
   }
 }
-
-// ============================================================
-//  БАЗА ЗАДАНИЯ 9
-// ============================================================
+// НОВОЕ: БАЗА ЗАДАНИЯ 12
+const T12_DB = [
+  { term: "Естественное движение населения", def: "Рождаемость, смертность, естественный прирост/убыль. Число рождений на 1000 жителей. Превышение смертности над рождаемостью." },
+  { term: "Урбанизация", def: "Процесс роста городов и увеличения доли городского населения (от слова «город»)." },
+  { term: "Миграция населения", def: "Перемещение людей через границу, из села в город, из государства в регион (иммиграция, эмиграция)." },
+  { term: "Городская агломерация", def: "Скопление поселений (главным образом городов), объединённых в единое целое тесными связями (маятниковая миграция, центр-ядро и пригороды)." },
+  { term: "Демографическая политика", def: "Меры государственного (экономического, административного, пропагандистского) влияния на рождаемость." },
+  { term: "Международное географическое разделение труда и специализация", def: "Ориентация хозяйства страны на производство определённой продукции для экспорта." },
+  { term: "Трудовые ресурсы", def: "Экономически активное население (занятые и безработные), а также миграции в экономику." },
+  { term: "Международная экономическая интеграция", def: "Объединение стран для экономических целей." }
+];
+function openTask12Ref() {
+  const container = document.getElementById('t12-ref-content');
+  container.innerHTML = '';
+  T12_DB.forEach(item => {
+    container.innerHTML += `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-800">${item.term}</div>
+        <div class="p-4 text-sm text-gray-700">${item.def}</div>
+      </div>`;
+  });
+}
+let t12CurrentQ = null;
+let t12CurrentOptions = [];
+let t12Answered = false;
+let t12QNum = 1;
+function startTask12Quiz() {
+  showScreen('screen-task12-play');
+  t12QNum = 1;
+  document.getElementById('t12-q-num').textContent = t12QNum;
+  nextTask12Q();
+}
+function nextTask12Q() {
+  document.getElementById('t12-btn-next').classList.add('hidden');
+  document.getElementById('t12-explanation').classList.add('hidden');
+  t12CurrentQ = T12_DB[Math.floor(Math.random() * T12_DB.length)];
+  const otherDefs = T12_DB.filter(item => item.term !== t12CurrentQ.term).map(item => item.def);
+  otherDefs.sort(() => Math.random() - 0.5);
+  t12CurrentOptions = [t12CurrentQ.def, ...otherDefs.slice(0, 3)].sort(() => Math.random() - 0.5);
+  t12Answered = false;
+  document.getElementById('t12-term').textContent = t12CurrentQ.term;
+  const optContainer = document.getElementById('t12-options');
+  optContainer.innerHTML = '';
+  t12CurrentOptions.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer transition';
+    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
+    btn.onclick = () => checkTask12Answer(idx, btn);
+    optContainer.appendChild(btn);
+  });
+}
+function checkTask12Answer(idx, btn) {
+  if (t12Answered) return;
+  t12Answered = true;
+  const isCorrect = t12CurrentOptions[idx] === t12CurrentQ.def;
+  const expBox = document.getElementById('t12-explanation');
+  document.querySelectorAll('#t12-options .option-btn').forEach((b, i) => {
+    b.disabled = true;
+    if (t12CurrentOptions[i] === t12CurrentQ.def) {
+      b.classList.add('correct');
+    } else if (i === idx) {
+      b.classList.add('wrong');
+    }
+  });
+  if (isCorrect) {
+    stats.q12Correct++;
+    expBox.innerHTML = `<strong>Верно!</strong> Это правильное определение.`;
+    expBox.className = 'mt-5 p-3 bg-green-50 text-green-800 text-sm rounded-lg border border-green-200';
+  } else {
+    stats.q12Wrong++;
+    expBox.innerHTML = `<strong>Ошибка.</strong> Правильное определение подсвечено зелёным. Запомни его!`;
+    expBox.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
+  }
+  saveStats();
+  expBox.classList.remove('hidden');
+  document.getElementById('t12-btn-next').classList.remove('hidden');
+  t12QNum++;
+  document.getElementById('t12-q-num').textContent = t12QNum;
+}
+// СТАРАЯ БАЗА ЗАДАНИЯ 9
 const FAKE_RU = ["Курская область", "Смоленская область", "Мурманская область", "Республика Карелия", "Тверская область", "Калининградская область", "Псковская область", "Новгородская область", "Республика Коми", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Тыва", "Тюменская область", "Архангельская область", "Астраханская область", "Оренбургская область", "Курганская область", "Забайкальский край"];
 const FAKE_WORLD = ["Германия", "Франция", "Япония", "Италия", "Испания", "Швеция", "Финляндия", "Швейцария", "Польша", "Чехия", "Великобритания", "Португалия", "Греция", "Норвегия", "Исландия", "Монголия", "Казахстан", "Беларусь", "Украина", "Венгрия"];
-
 const QUIZ_DB = {
   russia: [
     { name: "Нефтяная промышленность", correct: ["Ханты-Мансийский АО", "Ямало-Ненецкий АО", "Республика Татарстан", "Республика Башкортостан", "Самарская область", "Оренбургская область", "Пермский край", "Республика Коми", "Красноярский край", "Иркутская область"] },
@@ -543,32 +565,26 @@ const QUIZ_DB = {
     { name: "Производство автомобилей", correct: ["Китай", "США", "Япония", "Германия", "Индия"] }
   ]
 };
-
 function getDistractors(region, correctList) {
   const pool = region === 'russia' ? [...FAKE_RU] : [...FAKE_WORLD];
   pool.sort(() => Math.random() - 0.5);
   return pool.filter(item => !correctList.includes(item)).slice(0, 3);
 }
-
 let currentQuizRegion = 'russia';
 let currentIndustry = null;
 let currentOptions = [];
 let selectedOpts = new Set();
 let correctAnswerIndices = new Set();
 let q9Answered = false;
-
 function openRefMenu() {
   showScreen('screen-task9-ref');
   switchRefTab('russia');
 }
-
 function switchRefTab(region) {
   document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  
   const container = document.getElementById('ref-content');
   container.innerHTML = '';
-  
   QUIZ_DB[region].forEach(item => {
     container.innerHTML += `
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
@@ -577,48 +593,38 @@ function switchRefTab(region) {
       </div>`;
   });
 }
-
 function startQuizMenu() {
   showScreen('screen-task9-play');
   startQuiz('russia');
 }
-
 function startQuiz(region) {
   currentQuizRegion = region;
   document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   nextQ9();
 }
-
 function nextQ9() {
   document.getElementById('q9-btn-next').classList.add('hidden');
   document.getElementById('q9-explanation').classList.add('hidden');
-  
   const pool = QUIZ_DB[currentQuizRegion];
   currentIndustry = pool[Math.floor(Math.random() * pool.length)];
-  
   const correctPool = [...currentIndustry.correct];
   const chosenCorrect = [];
   while(chosenCorrect.length < 3 && correctPool.length > 0) {
     const idx = Math.floor(Math.random() * correctPool.length);
     chosenCorrect.push(correctPool.splice(idx, 1)[0]);
   }
-  
   const chosenDist = getDistractors(currentQuizRegion, currentIndustry.correct);
   currentOptions = [...chosenCorrect, ...chosenDist].sort(() => Math.random() - 0.5);
-  
   correctAnswerIndices = new Set();
   currentOptions.forEach((opt, i) => {
     if (chosenCorrect.includes(opt)) correctAnswerIndices.add(i);
   });
-  
   selectedOpts.clear();
   q9Answered = false;
-  
   document.getElementById('q9-industry').textContent = currentIndustry.name;
   const optContainer = document.getElementById('q9-options');
   optContainer.innerHTML = '';
-  
   currentOptions.forEach((opt, idx) => {
     const btn = document.createElement('button');
     btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer';
@@ -627,7 +633,6 @@ function nextQ9() {
     optContainer.appendChild(btn);
   });
 }
-
 function toggleQ9Option(idx, btn) {
   if (q9Answered) return;
   if (selectedOpts.has(idx)) {
@@ -641,11 +646,9 @@ function toggleQ9Option(idx, btn) {
   }
   if (selectedOpts.size === 3) checkQ9();
 }
-
 function checkQ9() {
   q9Answered = true;
   let isAllCorrect = true;
-  
   document.querySelectorAll('#q9-options .option-btn').forEach((btn, idx) => {
     btn.disabled = true;
     if (correctAnswerIndices.has(idx)) {
@@ -657,7 +660,6 @@ function checkQ9() {
       isAllCorrect = false;
     }
   });
-  
   const expBox = document.getElementById('q9-explanation');
   if (isAllCorrect) {
     expBox.innerHTML = `<strong>Отлично!</strong> Это действительно главные центры отрасли: ${currentIndustry.name}.`;
@@ -669,15 +671,9 @@ function checkQ9() {
     stats.q9Wrong++;
   }
   saveStats();
-  
   expBox.classList.remove('hidden');
   document.getElementById('q9-btn-next').classList.remove('hidden');
-}
-
-// ============================================================
-//  КАРТА ОТРАСЛЕЙ (ЗОНЫ)
-// ============================================================
-const INDUSTRY_ZONES = {
+}const INDUSTRY_ZONES = {
   russia: {
     "Нефтяная промышленность": [{ name: "Западная Сибирь", lat: 61, lng: 72, r: 350000 }, { name: "Волго-Урал", lat: 54, lng: 52, r: 250000 }, { name: "Тимано-Печора", lat: 66, lng: 55, r: 200000 }],
     "Газовая промышленность": [{ name: "Ямал", lat: 70, lng: 72, r: 300000 }, { name: "Оренбург/Астрахань", lat: 48, lng: 52, r: 200000 }, { name: "Сахалин", lat: 52, lng: 143, r: 150000 }, { name: "Коми", lat: 64, lng: 55, r: 200000 }],
@@ -754,24 +750,18 @@ const INDUSTRY_ZONES = {
     "Производство автомобилей": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -85, r: 800000 }, { name: "Европа", lat: 50, lng: 10, r: 600000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }]
   }
 };
-
 let indMap = null;
 let indZones = [];
 let indCurrentRegion = 'russia';
-
 function initIndustryMap() {
   showScreen('screen-industry-map');
-  
   if (!indMap) {
     indMap = L.map('map-industries', { zoomControl: false }).setView([65, 95], 3);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(indMap);
   }
-  
   setTimeout(() => indMap.invalidateSize(), 300);
-  
   const select = document.getElementById('industry-select');
   select.innerHTML = '';
-  
   const regionsData = INDUSTRY_ZONES[indCurrentRegion];
   for (const industry in regionsData) {
     const opt = document.createElement('option');
@@ -781,19 +771,15 @@ function initIndustryMap() {
   }
   drawZones();
 }
-
 function switchIndRegion(region) {
   indCurrentRegion = region;
   document.getElementById('btn-ind-ru').className = region === 'russia' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   document.getElementById('btn-ind-world').className = region === 'world' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
-  
   const center = region === 'russia' ? [65, 95] : [20, 0];
   const zoom = region === 'russia' ? 3 : 2;
   indMap.setView(center, zoom);
-  
   const select = document.getElementById('industry-select');
   select.innerHTML = '';
-  
   const regionsData = INDUSTRY_ZONES[indCurrentRegion];
   for (const industry in regionsData) {
     const opt = document.createElement('option');
@@ -803,38 +789,22 @@ function switchIndRegion(region) {
   }
   drawZones();
 }
-
 function drawZones() {
   indZones.forEach(zone => indMap.removeLayer(zone));
   indZones = [];
-  
   const industry = document.getElementById('industry-select').value;
   const zones = INDUSTRY_ZONES[indCurrentRegion][industry];
-  
   if (!zones) return;
-  
   zones.forEach(zone => {
-    const circle = L.circle([zone.lat, zone.lng], {
-      color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35, radius: zone.r, weight: 2
-    }).addTo(indMap);
+    const circle = L.circle([zone.lat, zone.lng], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35, radius: zone.r, weight: 2 }).addTo(indMap);
     circle.bindPopup(`<b>${zone.name}</b><br>${industry}`);
     indZones.push(circle);
   });
 }
-
-// ============================================================
-//  НЕЙРОТЁМА (Puter.js) И ВЫЗОВ ИЗ ЗАДАНИЙ
-// ============================================================
-const neuro = {
-  fab: null, panel: null, messagesEl: null, inputEl: null,
-  fileInput: null, preview: null, thumb: null, name: null, removeBtn: null,
-  currentFile: null, initialized: false
-};
-
+const neuro = { fab: null, panel: null, messagesEl: null, inputEl: null, fileInput: null, preview: null, thumb: null, name: null, removeBtn: null, currentFile: null, initialized: false };
 function initNeuro() {
   if (neuro.initialized) return;
   neuro.initialized = true;
-  
   neuro.fab = document.getElementById('neuro-fab');
   neuro.panel = document.getElementById('neuro-panel');
   neuro.messagesEl = document.getElementById('neuro-messages');
@@ -844,10 +814,8 @@ function initNeuro() {
   neuro.thumb = document.getElementById('neuro-image-thumb');
   neuro.name = document.getElementById('neuro-image-name');
   neuro.removeBtn = document.getElementById('neuro-image-remove');
-
   neuro.fab.addEventListener('click', () => toggleNeuro());
   document.getElementById('neuro-close').addEventListener('click', () => toggleNeuro(false));
-
   neuro.fileInput.addEventListener('change', () => {
     const f = neuro.fileInput.files[0];
     if (!f) return;
@@ -857,126 +825,89 @@ function initNeuro() {
     neuro.preview.classList.remove('hidden');
     neuro.fileInput.value = '';
   });
-  
   neuro.removeBtn.addEventListener('click', () => {
     neuro.currentFile = null;
     neuro.preview.classList.add('hidden');
     neuro.thumb.src = '';
   });
-
   document.getElementById('neuro-send').addEventListener('click', sendNeuro);
   neuro.inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendNeuro();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendNeuro(); }
   });
 }
-
 function toggleNeuro(show) {
   if (show === undefined) neuro.panel.classList.toggle('hidden');
   else if (show) neuro.panel.classList.remove('hidden');
   else neuro.panel.classList.add('hidden');
   if (!neuro.panel.classList.contains('hidden')) neuro.inputEl.focus();
 }
-
 function addNeuroMessage(text, role = 'user') {
   const div = document.createElement('div');
-  div.className = role === 'user'
-    ? 'bg-blue-100 text-blue-900 rounded-xl px-3 py-2 ml-8'
-    : role === 'assistant'
-      ? 'bg-white border border-gray-200 text-gray-800 rounded-xl px-3 py-2 mr-8 whitespace-pre-wrap'
-      : 'text-gray-500 italic text-xs';
+  div.className = role === 'user' ? 'bg-blue-100 text-blue-900 rounded-xl px-3 py-2 ml-8' : role === 'assistant' ? 'bg-white border border-gray-200 text-gray-800 rounded-xl px-3 py-2 mr-8 whitespace-pre-wrap' : 'text-gray-500 italic text-xs';
   div.textContent = text;
   neuro.messagesEl.appendChild(div);
   neuro.messagesEl.scrollTop = neuro.messagesEl.scrollHeight;
   return div;
 }
-
 async function sendNeuro() {
   const text = neuro.inputEl.value.trim();
   if (!text && !neuro.currentFile) return;
-
   const userMsg = addNeuroMessage(text || '[фото]', 'user');
   neuro.inputEl.value = '';
-
   if (neuro.currentFile) {
     const img = document.createElement('img');
     img.src = URL.createObjectURL(neuro.currentFile);
     img.className = 'mt-2 rounded-lg max-h-32 object-cover';
     userMsg.appendChild(img);
   }
-
   const fileToSend = neuro.currentFile;
   neuro.currentFile = null;
   neuro.preview.classList.add('hidden');
   neuro.thumb.src = '';
-
   const loading = addNeuroMessage('Нейротёма думает…', 'system');
-
   try {
-    if (typeof puter === 'undefined') {
-      throw new Error('Puter.js не загрузился. Проверь интернет.');
-    }
-
+    if (typeof puter === 'undefined') throw new Error('Puter.js не загрузился. Проверь интернет.');
     let response;
-    if (fileToSend) {
-      response = await puter.ai.chat(text || 'Что на этом фото? Если это задание ЕГЭ — проверь.', fileToSend, { model: 'gpt-4o-mini' });
-    } else {
-      response = await puter.ai.chat(text, { model: 'gpt-4o-mini' });
-    }
-
+    if (fileToSend) response = await puter.ai.chat(text || 'Что на этом фото? Если это задание ЕГЭ — проверь.', fileToSend, { model: 'gpt-4o-mini' });
+    else response = await puter.ai.chat(text, { model: 'gpt-4o-mini' });
     loading.remove();
-
     let answer = '';
     if (typeof response === 'string') answer = response;
     else if (response?.message?.content) answer = response.message.content;
     else if (response?.text) answer = response.text;
     else answer = JSON.stringify(response);
-
     addNeuroMessage(answer, 'assistant');
   } catch (err) {
     loading.remove();
     console.error(err);
     let msg = 'Не удалось получить ответ. ';
-    if (err.message && /auth|login|sign/i.test(err.message)) {
-      msg += 'Похоже, нужно войти в аккаунт Puter. Попробуй отправить ещё раз.';
-    } else {
-      msg += err.message || 'Попробуй позже.';
-    }
+    if (err.message && /auth|login|sign/i.test(err.message)) msg += 'Похоже, нужно войти в аккаунт Puter. Попробуй отправить ещё раз.';
+    else msg += err.message || 'Попробуй позже.';
     addNeuroMessage(msg, 'system');
   }
 }
-
-// Функции вызова Нейротёмы из заданий
 function askNeuroMap() {
-  initNeuro();
-  toggleNeuro(true);
+  initNeuro(); toggleNeuro(true);
   const topic = document.getElementById('map-topic-title').textContent;
   neuro.inputEl.value = `Объясни тему по географии: ${topic}. Подскажи, как лучше запомнить, где находятся эти объекты на карте?`;
   neuro.inputEl.focus();
 }
-
 function askNeuroQuiz() {
-  initNeuro();
-  toggleNeuro(true);
+  initNeuro(); toggleNeuro(true);
   const q = document.getElementById('q9-industry').textContent;
   neuro.inputEl.value = `Помоги разобраться с заданием 9 ЕГЭ по географии. Отрасль: ${q}. Какой регион или страна точно НЕ подходит и почему?`;
   neuro.inputEl.focus();
 }
-
 function askNeuroIndustryMap() {
-  initNeuro();
-  toggleNeuro(true);
+  initNeuro(); toggleNeuro(true);
   const industry = document.getElementById('industry-select').value;
   neuro.inputEl.value = `Расскажи подробнее про размещение отрасли: ${industry} в ${indCurrentRegion === 'russia' ? 'России' : 'Мире'}. Какие главные центры нужно знать?`;
   neuro.inputEl.focus();
 }
-
-// Инициализация при загрузке
 loadStats();
 switchRegion('russia');
 initNeuro();
+openTask12Ref(); // Чтобы справочник 12 задания сразу подгрузился
 </script>
 </body>
 </html>
