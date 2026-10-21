@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Математика (профиль) - ЕГЭ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  #neuro-panel { display: flex; }
+  #neuro-panel.hidden { display: none; }
+  .flashcard-word { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<header class="bg-white shadow-sm border-b border-gray-200">
+  <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+    <a href="index.html" class="text-xl font-bold text-blue-700">🎯 ЕГЭ-подготовка</a>
+    <nav class="flex gap-4">
+      <a href="index.html" class="text-sm text-gray-600 hover:text-gray-900">← На главную</a>
+    </nav>
+  </div>
+</header>
+<main id="app" class="max-w-4xl mx-auto px-4 py-8"></main>
+
+<button id="neuro-fab" class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
+<div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
+  <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+    <div class="font-semibold flex items-center gap-2"><span>🧠</span> Нейротёма</div>
+    <button id="neuro-close" class="text-white/80 hover:text-white text-xl leading-none">&times;</button>
+  </div>
+  <div id="neuro-messages" class="flex-1 overflow-y-auto p-3 space-y-3 text-sm bg-gray-50" style="min-height: 180px;">
+    <div class="text-gray-500 italic">Привет! Я помогу с математикой. Спроси любую формулу или пришли фото задачи — разберём!</div>
+  </div>
+  <div id="neuro-image-preview" class="px-3 pb-1 hidden">
+    <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-2 text-xs">
+      <img id="neuro-image-thumb" class="w-10 h-10 object-cover rounded" />
+      <span id="neuro-image-name" class="flex-1 truncate text-gray-600"></span>
+      <button id="neuro-image-remove" class="text-red-500 hover:text-red-700">✕</button>
+    </div>
+  </div>
+  <div class="p-3 border-t border-gray-200 flex items-end gap-2">
+    <label class="cursor-pointer text-gray-500 hover:text-gray-700 p-2" title="Прикрепить фото">📎
+      <input type="file" id="neuro-file-input" accept="image/*" class="hidden" />
+    </label>
+    <textarea id="neuro-input" rows="1" placeholder="Спроси что-нибудь…" class="flex-1 resize-none border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+    <button id="neuro-send" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 py-2 text-sm font-medium">➤</button>
+  </div>
+</div>
+
+<script>
+// ==================== ДАННЫЕ МАТЕМАТИКИ ====================// --- Задание 1 ---
+const MATH_TASK1_CARDS_RAW = [
+["Формула площади треугольника через основание и высоту", "S = ½ · a · h"],
+["Теорема Пифагора", "В прямоугольном треугольнике квадрат гипотенузы равен сумме квадратов катетов: c² = a² + b²"],
+["Формула площади круга", "S = πR²"],
+["Сумма углов выпуклого n-угольника", "180° · (n − 2)"],
+["Вписанный угол и дуга", "Вписанный угол равен половине дуги, на которую он опирается"],
+["Формула площади трапеции", "S = ((a + b) / 2) · h"],
+["Средняя линия треугольника", "Параллельна основанию и равна его половине"],
+["Теорема косинусов", "c² = a² + b² − 2ab·cos(C)"],
+["Радиус вписанной окружности в прямоугольный треугольник", "r = (a + b − c) / 2"],
+["Площадь ромба через диагонали", "S = (d₁ · d₂) / 2"]
+];
+
+// --- Задание 2 ---
+const MATH_TASK2_CARDS_RAW = [
+["Длина вектора {x; y}", "|a| = √(x² + y²)"],
+["Скалярное произведение векторов {x₁; y₁} и {x₂; y₂}", "a · b = x₁x₂ + y₁y₂"],
+["Условие перпендикулярности векторов", "a · b = 0 (скалярное произведение равно нулю)"],
+["Условие коллинеарности векторов", "x₁/y₁ = x₂/y₂ (координаты пропорциональны)"],
+["Косинус угла между векторами", "cos φ = (a · b) / (|a| · |b|)"],
+["Сложение векторов {x₁; y₁} и {x₂; y₂}", "a + b = {x₁ + x₂; y₁ + y₂}"],
+["Умножение вектора на число k", "k · a = {k·x; k·y}"],
+["Координаты вектора AB по точкам A(x₁; y₁) и B(x₂; y₂)", "AB = {x₂ − x₁; y₂ − y₁}"]
+];
+
+// --- Задание 3 ---
+const MATH_TASK3_CARDS_RAW = [
+["Объём прямоугольного параллелепипеда", "V = a · b · c"],
+["Объём куба", "V = a³"],
+["Объём призмы", "V = S_осн · h"],
+["Объём пирамиды", "V = (1/3) · S_осн · h"],
+["Объём цилиндра", "V = πR² · h"],
+["Объём конуса", "V = (1/3) · πR² · h"],
+["Объём шара", "V = (4/3) · πR³"],
+["Площадь поверхности сферы", "S = 4πR²"],
+["Диагональ прямоугольного параллелепипеда", "d² = a² + b² + c²"],
+["Площадь боковой поверхности прямой призмы", "S_бок = P_осн · h"]
+];
+
+// --- Задание 4 ---
+const MATH_TASK4_CARDS_RAW = [
+["Классическое определение вероятности", "P(A) = m / n, где m — благоприятные исходы, n — все исходы"],
+["Сумма вероятностей противоположных событий", "P(A) + P(не A) = 1"],
+["Вероятность суммы несовместных событий", "P(A + B) = P(A) + P(B)"],
+["Вероятность произведения независимых событий", "P(A · B) = P(A) · P(B)"],
+["Вероятность события «хотя бы один раз»", "1 − P(ни разу)"],
+["Формула полной вероятности", "P(A) = Σ P(Hᵢ) · P(A|Hᵢ)"],
+["Формула Байеса", "P(H|A) = P(H) · P(A|H) / P(A)"]
+];
+
+// --- Задание 5 ---
+const MATH_TASK5_CARDS_RAW = [
+["Корни квадратного уравнения ax² + bx + c = 0", "x = (−b ± √D) / (2a), где D = b² − 4ac"],
+["Теорема Виета для x² + px + q = 0", "x₁ + x₂ = −p; x₁ · x₂ = q"],
+["Решение показательного уравнения aˣ = b", "x = log_a(b), при a > 0, a ≠ 1, b > 0"],
+["Решение логарифмического уравнения log_a(x) = b", "x = aᵇ, при x > 0"],
+["Основное тригонометрическое тождество", "sin²x + cos²x = 1"],
+["Формула корней sin x = a", "x = (−1)ⁿ · arcsin(a) + πn"],
+["Формула корней cos x = a", "x = ± arccos(a) + 2πn"],
+["Формула корней tg x = a", "x = arctg(a) + πn"]
+];
+
+// --- Задание 6 ---
+const MATH_TASK6_CARDS_RAW = [
+["Вписанный угол", "Равен половине центрального угла, опирающегося на ту же дугу"],
+["Угол между касательной и хордой", "Равен половине дуги, заключённой между ними"],
+["Теорема о произведении отрезков пересекающихся хорд", "AE · BE = CE · DE"],
+["Теорема о квадрате касательной", "Квадрат касательной равен произведению секущей на её внешнюю часть: AB² = AC · AD"],
+["Сумма противоположных углов вписанного четырёхугольника", "180°"],
+["Центр вписанной окружности в треугольник", "Точка пересечения биссектрис"],
+["Центр описанной окружности около треугольника", "Точка пересечения серединных перпендикуляров"]
+];
+
+// --- Задание 7 ---
+const MATH_TASK7_CARDS_RAW = [
+["Геометрический смысл производной", "f'(x₀) = tg α = k (угловой коэффициент касательной)"],
+["Уравнение касательной", "y = f(x₀) + f'(x₀)(x − x₀)"],
+["Связь знака производной и монотонности", "f'(x) > 0 — функция возрастает; f'(x) < 0 — убывает"],
+["Точки экстремума", "В точках максимума/минимума производная равна 0 или не существует (меняет знак)"],
+["Производная константы", "(C)' = 0"],
+["Производная степенной функции", "(xⁿ)' = n·xⁿ⁻¹"],
+["Производная синуса и косинуса", "(sin x)' = cos x; (cos x)' = −sin x"],
+["Производная сложной функции", "(f(g(x)))' = f'(g(x)) · g'(x)"]
+];
+
+// --- Задание 8 ---
+const MATH_TASK8_CARDS_RAW = [
+["Отношение объёмов подобных тел", "k³, где k — коэффициент подобия"],
+["Отношение площадей подобных фигур", "k²"],
+["Объём наклонной призмы", "V = S_осн · h (h — высота, а не боковое ребро)"],
+["Площадь боковой поверхности цилиндра", "S_бок = 2πRh"],
+["Площадь полной поверхности цилиндра", "S_полн = 2πR(R + h)"],
+["Площадь боковой поверхности конуса", "S_бок = πRl, где l — образующая"],
+["Площадь полной поверхности конуса", "S_полн = πR(R + l)"]
+];
+
+// --- Задание 9 ---
+const MATH_TASK9_CARDS_RAW = [
+["Свойство степени aᵐ · aⁿ", "aᵐ⁺ⁿ"],
+["Свойство степени (aᵐ)ⁿ", "aᵐⁿ"],
+["Логарифм произведения", "log_a(xy) = log_a(x) + log_a(y)"],
+["Логарифм частного", "log_a(x/y) = log_a(x) − log_a(y)"],
+["Логарифм степени", "log_a(xᵏ) = k · log_a(x)"],
+["Переход к новому основанию", "log_a(b) = log_c(b) / log_c(a)"],
+["Основное логарифмическое тождество", "a^(log_a(b)) = b"],
+["Формула синуса двойного угла", "sin 2x = 2 sin x cos x"],
+["Формула косинуса двойного угла", "cos 2x = cos²x − sin²x"]
+];
+
+// --- Задание 10 ---
+const MATH_TASK10_CARDS_RAW = [
+["Формула пути при равномерном движении", "S = v · t"],
+["Формула работы (производительность)", "A = p · t, где p — производительность"],
+["Формула сложного процента (вклады)", "S = S₀ · (1 + r/100)ⁿ"],
+["Формула простого процента", "S = S₀ · (1 + n·r/100)"],
+["Задачи на движение по воде", "Скорость по течению = v_собств + v_теч; против = v_собств − v_теч"],
+["Задачи на среднюю скорость", "v_ср = S_общ / t_общ"],
+["Концентрация раствора", "C = m_вещества / m_раствора · 100%"]
+];// --- Задание 11 ---
+const MATH_TASK11_CARDS_RAW = [
+["Линейная функция y = kx + b", "График — прямая. k — угловой коэффициент (tg наклона). b — сдвиг по Oy"],
+["Парабола y = ax² + bx + c", "Ветви вверх при a > 0, вниз при a < 0. Вершина x₀ = −b/(2a)"],
+["Гипербола y = k/x", "Ветви в I и III четвертях при k > 0, во II и IV при k < 0"],
+["Показательная функция y = aˣ", "Возрастает при a > 1, убывает при 0 < a < 1. Всегда проходит через (0; 1)"],
+["Логарифмическая функция y = log_a(x)", "Область определения x > 0. Возрастает при a > 1, убывает при 0 < a < 1"],
+["Корень y = √x", "Область определения x ≥ 0. Возрастает на всей области"],
+["Тригонометрическая функция y = sin x", "Период 2π, область значений [−1; 1]"],
+["Тригонометрическая функция y = cos x", "Период 2π, область значений [−1; 1]"],
+["Сдвиг графика по Oy", "y = f(x) + b"],
+["Сдвиг графика по Ox", "y = f(x − a)"]
+];
+
+// --- Задание 12 ---
+const MATH_TASK12_CARDS_RAW = [
+["Алгоритм нахождения точек экстремума", "1) Найти производную. 2) Приравнять к нулю. 3) Определить знаки производной слева и справа. 4) Если меняется с + на − — максимум, с − на + — минимум"],
+["Алгоритм нахождения наибольшего/наименьшего значения на отрезке", "1) Найти критические точки внутри отрезка. 2) Вычислить значение функции в них и на концах отрезка. 3) Выбрать наибольшее/наименьшее"],
+["Точка максимума", "Производная меняет знак с плюса на минус"],
+["Точка минимума", "Производная меняет знак с минуса на плюс"],
+["Промежутки возрастания", "f'(x) ≥ 0"],
+["Промежутки убывания", "f'(x) ≤ 0"],
+["Вторая производная", "Если f''(x) > 0 — функция выпукла вниз, если < 0 — выпукла вверх"]
+];
+
+// --- Задание 13 ---
+const MATH_TASK13_CARDS_RAW = [
+["Метод замены переменной", "Сведение уравнения к квадратному или простейшему относительно новой переменной"],
+["Однородное тригонометрическое уравнение", "a·sin x + b·cos x = 0 решается делением на cos x"],
+["Разложение на множители", "Группировка, вынесение общего множителя, формулы сокращённого умножения"],
+["Отбор корней на промежутке", "С помощью тригонометрической окружности или двойных неравенств"],
+["Логарифмирование обеих частей", "Применяется, когда неизвестное в показателе степени"],
+["Возведение в квадрат", "Требует проверки корней (могут появиться посторонние)"],
+["Формулы понижения степени", "sin²x = (1 − cos 2x) / 2; cos²x = (1 + cos 2x) / 2"]
+];
+
+// --- Задание 14 ---
+const MATH_TASK14_CARDS_RAW = [
+["Угол между прямой и плоскостью", "Угол между прямой и её проекцией на плоскость"],
+["Угол между плоскостями", "Угол между перпендикулярами к линии пересечения плоскостей (линейный угол двугранного угла)"],
+["Расстояние от точки до плоскости", "Длина перпендикуляра, опущенного из точки на плоскость"],
+["Теорема о трёх перпендикулярах", "Если прямая в плоскости перпендикулярна проекции наклонной, то она перпендикулярна и самой наклонной"],
+["Признак перпендикулярности прямой и плоскости", "Прямая перпендикулярна плоскости, если она перпендикулярна двум пересекающимся прямым в этой плоскости"],
+["Координатный метод: расстояние между точками", "√((x₂−x₁)² + (y₂−y₁)² + (z₂−z₁)²)"],
+["Координатный метод: уравнение плоскости", "Ax + By + Cz + D = 0, где (A; B; C) — вектор нормали"]
+];
+
+// --- Задание 15 ---
+const MATH_TASK15_CARDS_RAW = [
+["Метод интервалов", "1) Найти нули числителя и знаменателя. 2) Отметить на числовой прямой. 3) Определить знаки на промежутках. 4) Выбрать нужные"],
+["Показательное неравенство aˣ > aᵇ", "Если a > 1, то x > b (знак сохраняется); если 0 < a < 1, то x < b (знак меняется)"],
+["Логарифмическое неравенство log_a(x) > log_a(b)", "Если a > 1, то x > b (с учётом ОДЗ x > 0); если 0 < a < 1, то x < b"],
+["Квадратное неравенство", "Найти корни, нарисовать параболу, выбрать нужные промежутки"],
+["Метод рационализации (для логарифмов)", "log_a(x) − log_a(y) имеет тот же знак, что и (a − 1)(x − y)"],
+["ОДЗ для логарифма", "Выражение под логарифмом > 0, основание > 0 и ≠ 1"],
+["ОДЗ для корня чётной степени", "Подкоренное выражение ≥ 0"]
+];
+
+// --- Задание 16 ---
+const MATH_TASK16_CARDS_RAW = [
+["Схема кредита с аннуитетными платежами", "Каждый месяц долг сначала умножается на (1 + r), затем вычитается платёж. В конце долг равен 0"],
+["Схема кредита с дифференцированными платежами", "Долг уменьшается равномерно (на одну и ту же сумму), проценты начисляются на остаток"],
+["Формула для вкладов (сложный процент)", "S = S₀ · (1 + r/100)ⁿ"],
+["Оптимизация (максимизация прибыли)", "Составить функцию прибыли, найти производную, приравнять к нулю, проверить максимум"],
+["Перевод процентов в доли", "r% = r / 100"],
+["Задачи на оптимальный выбор", "Составить систему ограничений и целевую функцию, найти максимум/минимум"]
+];
+
+// --- Задание 17 ---
+const MATH_TASK17_CARDS_RAW = [
+["Теорема Чевы", "Для треугольника ABC и точек A₁, B₁, C₁ на сторонах: (AC₁/C₁B) · (BA₁/A₁C) · (CB₁/B₁A) = 1"],
+["Теорема Менелая", "Для треугольника и секущей прямой: (AC₁/C₁B) · (BA₁/A₁C) · (CB₁/B₁A) = −1 (с учётом направлений)"],
+["Свойство биссектрисы треугольника", "Делит противоположную сторону на отрезки, пропорциональные прилежащим сторонам"],
+["Теорема синусов", "a / sin A = b / sin B = c / sin C = 2R"],
+["Теорема косинусов (расширенная)", "c² = a² + b² − 2ab·cos C"],
+["Площадь через две стороны и угол", "S = ½ · a · b · sin C"],
+["Формула Герона", "S = √(p(p−a)(p−b)(p−c)), где p — полупериметр"]
+];
+
+// --- Задание 18 ---
+const MATH_TASK18_CARDS_RAW = [
+["Аналитический метод (параметр как число)", "Решаем уравнение относительно x, выражаем x через параметр a, исследуем допустимые значения"],
+["Графический метод (в плоскости xOa)", "Строим график уравнения, рассматриваем горизонтальные прямые a = const, считаем точки пересечения"],
+["Квадратное уравнение с параметром", "Исследуем дискриминант: D > 0 — два корня, D = 0 — один, D < 0 — нет"],
+["Расположение корней квадратного уравнения", "Используем свойства параболы: вершина, знаки на концах отрезка, направление ветвей"],
+["Уравнение с модулем и параметром", "Раскрываем модуль по определению, рассматриваем случаи"],
+["Система с параметром", "Геометрическая интерпретация (прямые, окружности) или подстановка"]
+];
+
+// --- Задание 19 ---
+const MATH_TASK19_CARDS_RAW = [
+["Основная теорема арифметики", "Любое натуральное число > 1 единственным образом раскладывается на простые множители"],
+["Количество делителей числа", "Если n = p₁ᵏ¹ · p₂ᵏ² · … · pₘᵏᵐ, то число делителей = (k₁+1)(k₂+1)…(kₘ+1)"],
+["НОД и НОК", "НОД(a,b) · НОК(a,b) = a · b"],
+["Признак делимости на 3 и 9", "Сумма цифр делится на 3 (или 9)"],
+["Признак делимости на 4", "Две последние цифры образуют число, делящееся на 4"],
+["Признак делимости на 11", "Разность суммы цифр на чётных и нечётных местах делится на 11"],
+["Чётность и нечётность", "Сумма/разность: чёт ± чёт = чёт, чёт ± нечёт = нечёт, нечёт ± нечёт = чёт"],
+["Последовательности", "Арифметическая: aₙ = a₁ + d(n−1); Геометрическая: bₙ = b₁ · qⁿ⁻¹"]
+];
+
+// ---- превращение в объекты ----
+function makeFlashcards(raw, prefix) {
+  return raw.map(([prompt, answer], i) => ({
+    id: `${prefix}-${String(i + 1).padStart(3, '0')}`,
+    prompt,
+    answer
+  }));
+}
+
+// ==================== СТРУКТУРА ПРЕДМЕТА ====================
+const DATA = {
+  subjects: [
+    {
+      id: 'math',
+      name: 'Математика (профиль)',
+      icon: '📐',
+      description: 'Теория и формулы для всех 19 заданий ЕГЭ',
+      tasks: [
+        { id: 'math1', number: 1, title: 'Задание 1', description: 'Планиметрия: треугольники, четырёхугольники, окружность', cards: makeFlashcards(MATH_TASK1_CARDS_RAW, 'math1') },
+        { id: 'math2', number: 2, title: 'Задание 2', description: 'Векторы: координаты, скалярное произведение, длина', cards: makeFlashcards(MATH_TASK2_CARDS_RAW, 'math2') },
+        { id: 'math3', number: 3, title: 'Задание 3', description: 'Стереометрия: объёмы и площади поверхностей', cards: makeFlashcards(MATH_TASK3_CARDS_RAW, 'math3') },
+        { id: 'math4', number: 4, title: 'Задание 4', description: 'Теория вероятностей: классическое определение и теоремы', cards: makeFlashcards(MATH_TASK4_CARDS_RAW, 'math4') },
+        { id: 'math5', number: 5, title: 'Задание 5', description: 'Простейшие уравнения: квадратные, показательные, логарифмические', cards: makeFlashcards(MATH_TASK5_CARDS_RAW, 'math5') },
+        { id: 'math6', number: 6, title: 'Задание 6', description: 'Планиметрия: углы, вписанные углы, касательные', cards: makeFlashcards(MATH_TASK6_CARDS_RAW, 'math6') },
+        { id: 'math7', number: 7, title: 'Задание 7', description: 'Производная и графики: геометрический смысл, монотонность', cards: makeFlashcards(MATH_TASK7_CARDS_RAW, 'math7') },
+        { id: 'math8', number: 8, title: 'Задание 8', description: 'Стереометрия: объёмы, подобие, поверхности', cards: makeFlashcards(MATH_TASK8_CARDS_RAW, 'math8') },
+        { id: 'math9', number: 9, title: 'Задание 9', description: 'Вычисления и преобразования: степени, логарифмы', cards: makeFlashcards(MATH_TASK9_CARDS_RAW, 'math9') },
+        { id: 'math10', number: 10, title: 'Задание 10', description: 'Прикладные задачи: движение, работа, проценты', cards: makeFlashcards(MATH_TASK10_CARDS_RAW, 'math10') },
+        { id: 'math11', number: 11, title: 'Задание 11', description: 'Графики функций: линейная, парабола, гипербола', cards: makeFlashcards(MATH_TASK11_CARDS_RAW, 'math11') },
+        { id: 'math12', number: 12, title: 'Задание 12', description: 'Производная: исследование функций, экстремумы', cards: makeFlashcards(MATH_TASK12_CARDS_RAW, 'math12') },
+        { id: 'math13', number: 13, title: 'Задание 13', description: 'Сложные уравнения: замена переменной, отбор корней', cards: makeFlashcards(MATH_TASK13_CARDS_RAW, 'math13') },
+        { id: 'math14', number: 14, title: 'Задание 14', description: 'Стереометрия: углы между прямыми и плоскостями', cards: makeFlashcards(MATH_TASK14_CARDS_RAW, 'math14') },
+        { id: 'math15', number: 15, title: 'Задание 15', description: 'Неравенства: метод интервалов, показательные, логарифмические', cards: makeFlashcards(MATH_TASK15_CARDS_RAW, 'math15') },
+        { id: 'math16', number: 16, title: 'Задание 16', description: 'Экономические задачи: кредиты, вклады, оптимизация', cards: makeFlashcards(MATH_TASK16_CARDS_RAW, 'math16') },
+        { id: 'math17', number: 17, title: 'Задание 17', description: 'Планиметрия: теоремы Чевы, Менелая', cards: makeFlashcards(MATH_TASK17_CARDS_RAW, 'math17') },
+        { id: 'math18', number: 18, title: 'Задание 18', description: 'Параметры: аналитический и графический методы', cards: makeFlashcards(MATH_TASK18_CARDS_RAW, 'math18') },
+        { id: 'math19', number: 19, title: 'Задание 19', description: 'Теория чисел: делимость, НОК, НОД, последовательности', cards: makeFlashcards(MATH_TASK19_CARDS_RAW, 'math19') }
+      ]
+    }
+  ]
+};// ==================== ПРОГРЕСС ====================
+function getProgress(subjectId, taskId) {
+  try {
+    const raw = localStorage.getItem(`progress:${subjectId}:${taskId}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function markCard(subjectId, taskId, cardId, known) {
+  const p = getProgress(subjectId, taskId);
+  p[cardId] = { known, attempts: (p[cardId]?.attempts ?? 0) + 1, lastSeen: Date.now() };
+  localStorage.setItem(`progress:${subjectId}:${taskId}`, JSON.stringify(p));
+}
+function resetProgress(subjectId, taskId) {
+  localStorage.removeItem(`progress:${subjectId}:${taskId}`);
+}
+
+// ==================== УТИЛИТЫ ====================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function getSubject(id) { return DATA.subjects.find(s => s.id === id); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ==================== ИСТОРИЯ ОТВЕТОВ ====================
+function renderHistorySections(subject, task) {
+  const progress = getProgress(subject.id, task.id);
+  const known = [];
+  const unknown = [];
+
+  task.cards.forEach(card => {
+    const p = progress[card.id];
+    if (!p) return;
+    const label = card.prompt;
+    const answer = card.answer;
+    if (p.known) known.push({ label, answer });
+    else unknown.push({ label, answer });
+  });
+
+  if (known.length === 0 && unknown.length === 0) return '';
+
+  const renderItem = (item, cls) => `
+    <div class="text-xs ${cls} rounded-lg px-3 py-2 mb-2">
+      <div class="font-mono text-gray-800 break-words">${esc(item.label)}</div>
+      <div class="font-mono text-green-700 break-words">${esc(item.answer)}</div>
+    </div>`;
+
+  return `
+    <div class="mt-8 grid gap-4 md:grid-cols-2">
+      <div class="bg-white rounded-2xl shadow-sm border border-green-100 p-5">
+        <h3 class="text-sm font-semibold text-green-700 mb-3">✓ Изучено (${known.length})</h3>
+        ${known.length === 0
+          ? '<p class="text-xs text-gray-500 italic">Пока нет</p>'
+          : `<div class="space-y-2 max-h-64 overflow-y-auto">${known.map(i => renderItem(i, 'bg-green-50')).join('')}</div>`}
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-red-100 p-5">
+        <h3 class="text-sm font-semibold text-red-700 mb-3">✗ Надо повторить (${unknown.length})</h3>
+        ${unknown.length === 0
+          ? '<p class="text-xs text-gray-500 italic">Пока нет</p>'
+          : `<div class="space-y-2 max-h-64 overflow-y-auto">${unknown.map(i => renderItem(i, 'bg-red-50')).join('')}</div>`}
+      </div>
+    </div>`;
+}
+
+// ==================== СОСТОЯНИЕ ====================
+const state = {
+  taskKey: null, queue: [], index: 0, revealed: false, done: false, correct: 0
+};
+
+// ==================== РОУТЕР ====================
+function parseRoute() {
+  return (location.hash.slice(1) || '/').split('/').filter(Boolean);
+}
+function render() {
+  const parts = parseRoute();
+  const app = document.getElementById('app');
+  if (parts.length === 0) return renderHome(app);
+  if (parts[0] === 'stats') return renderStats(app);
+  if (parts[0] === 'subject' && parts[1]) {
+    if (parts[2]) return renderTask(app, parts[1], parts[2]);
+    return renderSubject(app, parts[1]);
+  }
+  app.innerHTML = '<p class="text-gray-500">Страница не найдена</p>';
+}
+
+// ==================== ЭКРАНЫ ====================
+function renderHome(app) {
+  app.innerHTML = `
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Математика (профиль)</h1>
+    <p class="text-gray-600 mb-8">Изучи теорию для каждого из 19 заданий ЕГЭ. Отмечай то, что уже знаешь!</p>
+    
+    <div class="grid gap-4 md:grid-cols-2">
+      ${DATA.subjects.map(s => {
+        const total = s.tasks.reduce((sum, t) => sum + t.cards.length, 0);
+        return `
+          <a href="#/subject/${s.id}" class="block bg-white rounded-2xl shadow-sm hover:shadow-md transition p-6 border border-gray-100">
+            <div class="text-4xl mb-3">${s.icon}</div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-1">${esc(s.name)}</h2>
+            <p class="text-sm text-gray-600 mb-3">${esc(s.description)}</p>
+            <p class="text-xs text-gray-500">${s.tasks.length} заданий • ${total} карточек теории</p>
+          </a>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderSubject(app, subjectId) {
+  const subject = getSubject(subjectId);
+  if (!subject) { location.hash = '#/'; return; }
+  app.innerHTML = `
+    <a href="#/" class="text-sm text-blue-600 hover:underline mb-4 inline-block">← На главную</a>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">${subject.icon} ${esc(subject.name)}</h1>
+    <p class="text-gray-600 mb-8">${esc(subject.description)}</p>
+    <div class="grid gap-3">
+      ${subject.tasks.map(t => {
+        const progress = getProgress(subject.id, t.id);
+        const known = t.cards.filter(c => progress[c.id]?.known).length;
+        const pct = t.cards.length ? Math.round(known / t.cards.length * 100) : 0;
+        return `
+          <a href="#/subject/${subject.id}/${t.id}" class="block bg-white rounded-xl shadow-sm hover:shadow-md transition p-5 border border-gray-100">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">${esc(t.title)}</h2>
+                <p class="text-sm text-gray-600">${esc(t.description)}</p>
+              </div>
+              <span class="text-sm text-gray-500 whitespace-nowrap ml-4">${known}/${t.cards.length}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div class="bg-blue-600 h-2 transition-all duration-300" style="width:${pct}%"></div>
+            </div>
+          </a>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderTask(app, subjectId, taskId) {
+  const subject = getSubject(subjectId);
+  const task = subject?.tasks.find(t => t.id === taskId);
+  if (!subject || !task) { location.hash = '#/'; return; }
+
+  const key = `${subjectId}:${taskId}`;
+  if (state.taskKey !== key) {
+    state.taskKey = key;
+    state.queue = shuffle(task.cards);
+    state.index = 0; state.revealed = false; state.done = false; state.correct = 0;
+  }
+  if (state.done) return renderDone(app, subject, task);
+  const card = state.queue[state.index];
+  return renderFlashcard(app, subject, task, card);
+}
+
+function renderFlashcard(app, subject, task, card) {
+  const progress = getProgress(subject.id, task.id);
+  const knownCount = task.cards.filter(c => progress[c.id]?.known).length;
+  const pct = state.queue.length ? Math.round(state.index / state.queue.length * 100) : 0;
+
+  app.innerHTML = `
+    <a href="#/subject/${subject.id}" class="text-sm text-blue-600 hover:underline mb-4 inline-block">← К списку заданий</a>
+    <div class="max-w-2xl mx-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">${esc(subject.name)} • ${esc(task.title)}</h1>
+          <p class="text-sm text-gray-500">${state.index + 1} из ${state.queue.length} • изучено ${knownCount}/${task.cards.length}</p>
+        </div>
+        <button id="btn-reset" class="text-xs text-gray-500 hover:text-red-600 transition">Сбросить</button>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-6">
+        <div class="bg-blue-600 h-2 transition-all duration-300" style="width:${pct}%"></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[320px] flex flex-col">
+        <div class="text-xs uppercase tracking-wide text-gray-400 mb-3">Вопрос / Формула</div>
+        <div class="flashcard-word text-xl md:text-2xl text-gray-900 text-center flex-1 flex items-center justify-center py-6 break-words">
+          ${esc(card.prompt)}
+        </div>
+        ${!state.revealed
+          ? `<button id="btn-reveal" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition">Показать ответ</button>`
+          : `<div class="text-xs uppercase tracking-wide text-gray-400 mb-3 mt-4">Ответ</div>
+             <div class="flashcard-word text-xl md:text-2xl text-green-700 text-center mb-6 break-words">${esc(card.answer)}</div>
+             <div class="grid grid-cols-2 gap-3">
+               <button id="btn-no" class="bg-red-50 hover:bg-red-100 text-red-700 font-medium py-3 rounded-xl transition border border-red-200">✗ Не знаю</button>
+               <button id="btn-yes" class="bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 rounded-xl transition border border-green-200">✓ Знаю</button>
+             </div>`}
+        <button data-neuro-context="Объясни, пожалуйста, эту тему по математике: ${esc(card.prompt)}. Ответ: ${esc(card.answer)}"
+          class="neuro-ask mt-3 text-xs text-blue-600 hover:text-blue-800 underline self-center">
+          🧠 Спросить Нейротёму
+        </button>
+      </div>
+      ${renderHistorySections(subject, task)}
+    </div>`;
+
+  document.getElementById('btn-reveal')?.addEventListener('click', () => { state.revealed = true; render(); });
+  document.getElementById('btn-no')?.addEventListener('click', () => answerFlashcard(false, subject, task));
+  document.getElementById('btn-yes')?.addEventListener('click', () => answerFlashcard(true, subject, task));
+  document.getElementById('btn-reset')?.addEventListener('click', () => {
+    if (confirm('Сбросить прогресс по этому заданию?')) {
+      resetProgress(subject.id, task.id);
+      state.taskKey = null;
+      render();
+    }
+  });
+  attachNeuroAsk();
+}
+
+function answerFlashcard(known, subject, task) {
+  const card = state.queue[state.index];
+  markCard(subject.id, task.id, card.id, known);
+  if (known) state.correct++;
+  state.revealed = false;
+  if (state.index + 1 >= state.queue.length) state.done = true;
+  else state.index++;
+  render();
+}
+
+function renderDone(app, subject, task) {
+  const progress = getProgress(subject.id, task.id);
+  const unknownCount = task.cards.filter(c => !progress[c.id]?.known).length;
+  app.innerHTML = `
+    <a href="#/subject/${subject.id}" class="text-sm text-blue-600 hover:underline mb-4 inline-block">← К списку заданий</a>
+    <div class="max-w-2xl mx-auto">
+      <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div class="text-5xl mb-4">🎉</div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Круг завершён!</h2>
+        <p class="text-gray-600 mb-6">Правильно: <span class="font-semibold text-green-700">${state.correct}</span> из <span class="font-semibold">${state.queue.length}</span></p>
+        <div class="grid gap-3 md:grid-cols-2">
+          <button id="btn-restart" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition">Повторить всё</button>
+          <button id="btn-unknown" ${unknownCount === 0 ? 'disabled' : ''} class="bg-yellow-100 hover:bg-yellow-200 disabled:opacity-40 disabled:cursor-not-allowed text-yellow-800 font-medium py-3 rounded-xl transition">Только неизученные (${unknownCount})</button>
+        </div>
+      </div>
+      ${renderHistorySections(subject, task)}
+    </div>`;
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    state.queue = shuffle(task.cards);
+    state.index = 0; state.revealed = false; state.done = false; state.correct = 0;
+    render();
+  });
+  document.getElementById('btn-unknown')?.addEventListener('click', () => {
+    const unknown = task.cards.filter(c => !progress[c.id]?.known);
+    if (!unknown.length) return;
+    state.queue = shuffle(unknown);
+    state.index = 0; state.revealed = false; state.done = false; state.correct = 0;
+    render();
+  });
+}
+
+function renderStats(app) {
+  app.innerHTML = `
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Прогресс по математике</h1>
+    <p class="text-gray-600 mb-8">Сколько карточек теории ты уже знаешь.</p>
+    ${DATA.subjects.map(subject => `
+      <section class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">${subject.icon} ${esc(subject.name)}</h2>
+        <div class="grid gap-3">
+          ${subject.tasks.map(t => {
+            const progress = getProgress(subject.id, t.id);
+            const known = t.cards.filter(c => progress[c.id]?.known).length;
+            const pct = t.cards.length ? Math.round(known / t.cards.length * 100) : 0;
+            return `
+              <a href="#/subject/${subject.id}/${t.id}" class="block bg-white rounded-xl shadow-sm hover:shadow-md transition p-5 border border-gray-100">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="font-semibold text-gray-900">${esc(t.title)}</h3>
+                  <span class="text-sm text-gray-500">${known}/${t.cards.length}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div class="bg-blue-600 h-2 transition-all duration-300" style="width:${pct}%"></div>
+                </div>
+              </a>`;
+          }).join('')}
+        </div>
+      </section>`).join('')}`;
+}
+
+// ==================== НЕЙРОТЁМА ====================
+const neuro = { fab: null, panel: null, messagesEl: null, inputEl: null, fileInput: null, preview: null, thumb: null, name: null, removeBtn: null, currentFile: null, initialized: false };
+
+function initNeuro() {
+  if (neuro.initialized) return;
+  neuro.initialized = true;
+  neuro.fab = document.getElementById('neuro-fab');
+  neuro.panel = document.getElementById('neuro-panel');
+  neuro.messagesEl = document.getElementById('neuro-messages');
+  neuro.inputEl = document.getElementById('neuro-input');
+  neuro.fileInput = document.getElementById('neuro-file-input');
+  neuro.preview = document.getElementById('neuro-image-preview');
+  neuro.thumb = document.getElementById('neuro-image-thumb');
+  neuro.name = document.getElementById('neuro-image-name');
+  neuro.removeBtn = document.getElementById('neuro-image-remove');
+
+  neuro.fab.addEventListener('click', () => toggleNeuro());
+  document.getElementById('neuro-close').addEventListener('click', () => toggleNeuro(false));
+
+  neuro.fileInput.addEventListener('change', () => {
+    const f = neuro.fileInput.files[0];
+    if (!f) return;
+    neuro.currentFile = f;
+    neuro.thumb.src = URL.createObjectURL(f);
+    neuro.name.textContent = f.name;
+    neuro.preview.classList.remove('hidden');
+    neuro.fileInput.value = '';
+  });
+  neuro.removeBtn.addEventListener('click', () => {
+    neuro.currentFile = null;
+    neuro.preview.classList.add('hidden');
+    neuro.thumb.src = '';
+  });
+
+  document.getElementById('neuro-send').addEventListener('click', sendNeuro);
+  neuro.inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendNeuro();
+    }
+  });
+}
+
+function toggleNeuro(show) {
+  if (show === undefined) neuro.panel.classList.toggle('hidden');
+  else if (show) neuro.panel.classList.remove('hidden');
+  else neuro.panel.classList.add('hidden');
+  if (!neuro.panel.classList.contains('hidden')) neuro.inputEl.focus();
+}
+
+function addNeuroMessage(text, role = 'user') {
+  const div = document.createElement('div');
+  div.className = role === 'user'
+    ? 'bg-blue-100 text-blue-900 rounded-xl px-3 py-2 ml-8'
+    : role === 'assistant'
+      ? 'bg-white border border-gray-200 text-gray-800 rounded-xl px-3 py-2 mr-8 whitespace-pre-wrap'
+      : 'text-gray-500 italic text-xs';
+  div.textContent = text;
+  neuro.messagesEl.appendChild(div);
+  neuro.messagesEl.scrollTop = neuro.messagesEl.scrollHeight;
+  return div;
+}
+
+async function sendNeuro() {
+  const text = neuro.inputEl.value.trim();
+  if (!text && !neuro.currentFile) return;
+
+  const userMsg = addNeuroMessage(text || '[фото]', 'user');
+  neuro.inputEl.value = '';
+
+  if (neuro.currentFile) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(neuro.currentFile);
+    img.className = 'mt-2 rounded-lg max-h-32 object-cover';
+    userMsg.appendChild(img);
+  }
+
+  const fileToSend = neuro.currentFile;
+  neuro.currentFile = null;
+  neuro.preview.classList.add('hidden');
+  neuro.thumb.src = '';
+
+  const loading = addNeuroMessage('Нейротёма думает…', 'system');
+
+  try {
+    if (typeof puter === 'undefined') throw new Error('Puter.js не загрузился.');
+    let response;
+    if (fileToSend) {
+      response = await puter.ai.chat(text || 'Помоги с этой задачей по математике.', fileToSend, { model: 'gpt-4o-mini' });
+    } else {
+      response = await puter.ai.chat(text, { model: 'gpt-4o-mini' });
+    }
+    loading.remove();
+    let answer = '';
+    if (typeof response === 'string') answer = response;
+    else if (response?.message?.content) answer = response.message.content;
+    else if (response?.text) answer = response.text;
+    else answer = JSON.stringify(response);
+    addNeuroMessage(answer, 'assistant');
+  } catch (err) {
+    loading.remove();
+    let msg = 'Не удалось получить ответ. ';
+    if (err.message && /auth|login|sign/i.test(err.message)) msg += 'Войди в аккаунт Puter.';
+    else msg += err.message || 'Попробуй позже.';
+    addNeuroMessage(msg, 'system');
+  }
+}
+
+function attachNeuroAsk() {
+  document.querySelectorAll('.neuro-ask').forEach(btn => {
+    btn.addEventListener('click', () => {
+      initNeuro();
+      toggleNeuro(true);
+      const ctx = btn.getAttribute('data-neuro-context') || '';
+      neuro.inputEl.value = ctx;
+      neuro.inputEl.focus();
+    });
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  const parts = parseRoute();
+  const key = parts[0] === 'subject' && parts[2] ? `${parts[1]}:${parts[2]}` : null;
+  if (state.taskKey && state.taskKey !== key) state.taskKey = null;
+  render();
+  window.scrollTo(0, 0);
+});
+window.addEventListener('DOMContentLoaded', () => {
+  initNeuro();
+  render();
+});
+</script>
+</body>
+</html>
