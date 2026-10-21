@@ -19,7 +19,7 @@
     <a href="#/" class="text-xl font-bold text-blue-700">🎯 ЕГЭ-подготовка</a>
     <nav class="flex gap-4">
       <a href="#/" class="text-sm text-gray-600 hover:text-gray-900">Главная</a>
-      <a href="#/stats" class="text-sm text-gray-600 hover:text-gray-900">Прогресс</a>
+      <a href="#/stats" class="text-sm text-gray-600 hover:text-gray-900">Лера попа</a>
     </nav>
   </div>
 </header>
@@ -843,6 +843,45 @@ function esc(s) {
   }[c]));
 }
 function isChoice(card) { return Array.isArray(card.options); }
+  // ==================== ИСТОРИЯ ОТВЕТОВ ====================
+function renderHistorySections(subject, task) {
+  const progress = getProgress(subject.id, task.id);
+  const known = [];
+  const unknown = [];
+
+  task.cards.forEach(card => {
+    const p = progress[card.id];
+    if (!p) return;
+    const label = isChoice(card) ? card.question : card.prompt;
+    const answer = card.answer;
+    if (p.known) known.push({ label, answer });
+    else unknown.push({ label, answer });
+  });
+
+  if (known.length === 0 && unknown.length === 0) return '';
+
+  const renderItem = (item, cls) => `
+    <div class="text-xs ${cls} rounded-lg px-3 py-2">
+      <div class="font-mono text-gray-800 break-words">${esc(item.label)}</div>
+      <div class="font-mono text-green-700 break-words">${esc(item.answer)}</div>
+    </div>`;
+
+  return `
+    <div class="mt-8 grid gap-4 md:grid-cols-2">
+      <div class="bg-white rounded-2xl shadow-sm border border-green-100 p-5">
+        <h3 class="text-sm font-semibold text-green-700 mb-3">✓ Решено правильно (${known.length})</h3>
+        ${known.length === 0
+          ? '<p class="text-xs text-gray-500 italic">Пока нет</p>'
+          : `<div class="space-y-2 max-h-64 overflow-y-auto">${known.map(i => renderItem(i, 'bg-green-50')).join('')}</div>`}
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-red-100 p-5">
+        <h3 class="text-sm font-semibold text-red-700 mb-3">✗ Решено неправильно (${unknown.length})</h3>
+        ${unknown.length === 0
+          ? '<p class="text-xs text-gray-500 italic">Пока нет</p>'
+          : `<div class="space-y-2 max-h-64 overflow-y-auto">${unknown.map(i => renderItem(i, 'bg-red-50')).join('')}</div>`}
+      </div>
+    </div>`;
+}
 
 // ==================== СОСТОЯНИЕ ====================
 const state = {
@@ -983,11 +1022,12 @@ function renderFlashcard(app, subject, task, card) {
                <button id="btn-no" class="bg-red-50 hover:bg-red-100 text-red-700 font-medium py-3 rounded-xl transition border border-red-200">✗ Не знаю</button>
                <button id="btn-yes" class="bg-green-50 hover:bg-green-100 text-green-700 font-medium py-3 rounded-xl transition border border-green-200">✓ Знаю</button>
              </div>`}
-        <button data-neuro-context="Объясни, пожалуйста, правило для слова: ${esc(card.prompt)}. Правильный ответ: ${esc(card.answer)}"
+               <button data-neuro-context="Объясни, пожалуйста, правило для слова: ${esc(card.prompt)}. Правильный ответ: ${esc(card.answer)}"
           class="neuro-ask mt-3 text-xs text-blue-600 hover:text-blue-800 underline self-center">
           🧠 Спросить Нейротёму
         </button>
       </div>
+      ${renderHistorySections(subject, task)}
     </div>`;
 
   document.getElementById('btn-reveal')?.addEventListener('click', () => { state.revealed = true; render(); });
@@ -1054,11 +1094,12 @@ function renderChoice(app, subject, task, card) {
         <div class="text-xs uppercase tracking-wide text-gray-400 mb-3">Выбери верный вариант</div>
         <div class="grid gap-3">${optionButtons}</div>
         ${state.showResult ? `<button id="btn-next" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition">Дальше →</button>` : ''}
-        <button data-neuro-context="Помоги разобраться: ${esc(card.question)}. Варианты: ${esc(card.options.join(', '))}. Правильный ответ: ${esc(card.answer)}"
+               <button data-neuro-context="Помоги разобраться: ${esc(card.question)}. Варианты: ${esc(card.options.join(', '))}. Правильный ответ: ${esc(card.answer)}"
           class="neuro-ask mt-3 text-xs text-blue-600 hover:text-blue-800 underline self-center block mx-auto">
           🧠 Спросить Нейротёму
         </button>
       </div>
+      ${renderHistorySections(subject, task)}
     </div>`;
 
   document.querySelectorAll('[data-opt]').forEach(btn => {
@@ -1102,9 +1143,10 @@ function renderDone(app, subject, task) {
         <p class="text-gray-600 mb-6">Правильно: <span class="font-semibold text-green-700">${state.correct}</span> из <span class="font-semibold">${state.queue.length}</span></p>
         <div class="grid gap-3 md:grid-cols-2">
           <button id="btn-restart" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition">Повторить всё</button>
-          <button id="btn-unknown" ${unknownCount === 0 ? 'disabled' : ''} class="bg-yellow-100 hover:bg-yellow-200 disabled:opacity-40 disabled:cursor-not-allowed text-yellow-800 font-medium py-3 rounded-xl transition">Только неизученные (${unknownCount})</button>
+                   <button id="btn-unknown" ${unknownCount === 0 ? 'disabled' : ''} class="bg-yellow-100 hover:bg-yellow-200 disabled:opacity-40 disabled:cursor-not-allowed text-yellow-800 font-medium py-3 rounded-xl transition">Только неизученные (${unknownCount})</button>
         </div>
       </div>
+      ${renderHistorySections(subject, task)}
     </div>`;
   document.getElementById('btn-restart').addEventListener('click', () => {
     state.queue = shuffle(task.cards);
