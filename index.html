@@ -4,18 +4,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>ЕГЭ-подготовка | Тренажёр</title>
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- Puter.js (Нейротёма) -->
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; overflow: hidden; background: #f8fafc; margin: 0; padding: 0; }
   header { position: fixed; top: 0; left: 0; right: 0; height: 64px; z-index: 3000; background: #fff; border-bottom: 1px solid #e5e7eb; }
+  #task-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 3000; background: #fff; border-bottom: 1px solid #e5e7eb; align-items: center; justify-content: space-between; padding: 0 16px; }
   .screen { display: none; position: absolute; top: 64px; bottom: 0; left: 0; right: 0; overflow-y: auto; background: #f8fafc; z-index: 10; }
   .screen.active { display: block; z-index: 20; }
-  #screen-main.active, #screen-lit-menu.active, #screen-quiz-menu.active, #screen-geo-menu.active, #screen-task9-menu.active, #screen-task12-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  body.in-task header { display: none; }
+  body.in-task #task-topbar { display: flex; }
+  body.in-task .screen { top: 56px; }
+  #screen-main.active, #screen-lit-menu.active, #screen-quiz-menu.active, #screen-geo-menu.active, #screen-task9-menu.active, #screen-task12-menu.active, #screen-rus-menu.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
   #map, #map-industries { height: 100%; width: 100%; background: #d0d8e0; z-index: 1; }
   #screen-task4-play, #screen-geo-industry-map { overflow: hidden; }
   .menu-card { background: #fff; padding: 20px; border-radius: 16px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background-color 0.2s, transform 0.1s; border: 2px solid transparent; width: 100%; display: block; margin-bottom: 16px; box-sizing: border-box; }
@@ -41,6 +43,10 @@
     </nav>
   </div>
 </header>
+<div id="task-topbar">
+  <button onclick="goBack()" class="text-blue-600 font-bold hover:underline bg-transparent border-none cursor-pointer text-base">← Назад</button>
+  <button onclick="toggleNeuroPanel()" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1.5 rounded-full font-bold text-sm border border-blue-300 cursor-pointer">🧠 Нейротёма</button>
+</div>
 <div id="screen-main" class="screen active">
   <div class="w-full max-w-md">
     <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">🎯 ЕГЭ-подготовка</h1>
@@ -49,31 +55,30 @@
       <button onclick="showScreen('screen-lit-menu')" class="menu-card border-l-4 border-l-fuchsia-500">
         <div class="text-4xl mb-3">✍️</div>
         <h2 class="text-xl font-bold text-gray-800">Итоговое сочинение</h2>
-        <p class="text-sm text-gray-500 mt-1">Тренажёр литературных аргументов</p>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit">0</span> тем</p>
       </button>
       <button onclick="showScreen('screen-geo-menu')" class="menu-card border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🌍</div>
         <h2 class="text-xl font-bold text-gray-800">География ЕГЭ</h2>
-        <p class="text-sm text-gray-500 mt-1">Карты, отрасли, термины</p>
+        <p class="text-sm text-gray-500 mt-1">3 задания</p>
       </button>
-      <button onclick="openUnifiedStats()" class="menu-card border-l-4 border-l-yellow-500">
-        <div class="text-4xl mb-3">🏆</div>
-        <h2 class="text-xl font-bold text-gray-800">Рейтинг отсталого</h2>
-        <p class="text-sm text-gray-500 mt-1">Статистика по всем предметам</p>
+      <button onclick="showScreen('screen-rus-menu')" class="menu-card border-l-4 border-l-red-500">
+        <div class="text-4xl mb-3">📖</div>
+        <h2 class="text-xl font-bold text-gray-800">Русский язык</h2>
+        <p class="text-sm text-gray-500 mt-1">Раздел в разработке</p>
       </button>
     </div>
   </div>
 </div>
 <div id="screen-lit-menu" class="screen">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-2 text-center">✍️ Итоговое сочинение</h1>
     <p class="text-center text-gray-500 mb-6">Тренажёр литературных аргументов</p>
     <div class="flex flex-col">
       <button onclick="showScreen('screen-quiz-menu')" class="menu-card border-l-4 border-l-fuchsia-500">
         <div class="text-4xl mb-3">🎮</div>
         <h2 class="text-xl font-bold text-gray-800">Тренажёр</h2>
-        <p class="text-sm text-gray-500 mt-1">Подбери 2 аргумента к теме</p>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit-all">0</span> тем · подбери 2 аргумента</p>
       </button>
       <button onclick="openReference()" class="menu-card border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">📚</div>
@@ -85,28 +90,30 @@
 </div>
 <div id="screen-quiz-menu" class="screen">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-lit-menu')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Выбери раздел</h1>
     <div class="flex flex-col">
       <button onclick="startQuiz('all')" class="menu-card border-l-4 border-l-fuchsia-500">
         <h2 class="text-lg font-bold text-gray-800">Все темы (Микс)</h2>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit-all2">0</span> тем</p>
       </button>
       <button onclick="startQuiz('1')" class="menu-card border-l-4 border-l-purple-500">
         <h2 class="text-lg font-bold text-gray-800">1. Духовно-нравственные ориентиры</h2>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit-1">0</span> тем</p>
       </button>
       <button onclick="startQuiz('2')" class="menu-card border-l-4 border-l-orange-500">
         <h2 class="text-lg font-bold text-gray-800">2. Семья, общество, Отечество</h2>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit-2">0</span> тем</p>
       </button>
       <button onclick="startQuiz('3')" class="menu-card border-l-4 border-l-emerald-500">
         <h2 class="text-lg font-bold text-gray-800">3. Природа и культура</h2>
+        <p class="text-sm text-gray-500 mt-1"><span id="count-lit-3">0</span> тем</p>
       </button>
     </div>
   </div>
 </div>
 <div id="screen-quiz-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
-    <div class="flex justify-between items-center mb-4">
-      <button onclick="showScreen('screen-quiz-menu')" class="text-blue-600 font-bold hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <div class="flex justify-end items-center mb-4">
       <div class="text-sm font-bold text-gray-600">Вопрос <span id="q-num">1</span></div>
     </div>
     <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden mb-4">
@@ -128,36 +135,33 @@
 </div>
 <div id="screen-ref" class="screen p-4">
   <div class="max-w-3xl mx-auto">
-    <button onclick="showScreen('screen-lit-menu')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📚 Справочник аргументов</h1>
     <div id="ref-content" class="space-y-6 pb-10"></div>
   </div>
 </div><div id="screen-geo-menu" class="screen">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🌍 География ЕГЭ</h1>
     <div class="flex flex-col">
       <button onclick="showScreen('screen-task4-menu')" class="menu-card border-l-4 border-l-blue-500">
         <div class="text-4xl mb-3">🗺️</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 4</h2>
-        <p class="text-sm text-gray-500 mt-1">Карты России и Мира</p>
+        <p class="text-sm text-gray-500 mt-1">Карты · <span id="count-t4">0</span> тем</p>
       </button>
       <button onclick="showScreen('screen-task9-menu')" class="menu-card border-l-4 border-l-green-500">
         <div class="text-4xl mb-3">🏭</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 9</h2>
-        <p class="text-sm text-gray-500 mt-1">Отрасли хозяйства</p>
+        <p class="text-sm text-gray-500 mt-1">Отрасли · <span id="count-t9">0</span> отраслей</p>
       </button>
       <button onclick="showScreen('screen-task12-menu')" class="menu-card border-l-4 border-l-purple-500">
         <div class="text-4xl mb-3">📖</div>
         <h2 class="text-xl font-bold text-gray-800">Задание 12</h2>
-        <p class="text-sm text-gray-500 mt-1">Термины и определения</p>
+        <p class="text-sm text-gray-500 mt-1">Термины · <span id="count-t12">0</span> терминов</p>
       </button>
     </div>
   </div>
 </div>
 <div id="screen-task4-menu" class="screen p-4">
   <div class="max-w-3xl mx-auto w-full">
-    <button onclick="showScreen('screen-geo-menu')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <div class="flex gap-2 mb-6">
       <button onclick="switchRegion('russia')" id="btn-reg-russia" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer">🇷🇺 Россия</button>
       <button onclick="switchRegion('world')" id="btn-reg-world" class="flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer">🌍 Мир</button>
@@ -167,7 +171,6 @@
 </div>
 <div id="screen-task4-play" class="screen">
   <div id="map"></div>
-  <button onclick="showScreen('screen-task4-menu')" class="absolute top-4 left-4 z-[1000] bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer">← Назад</button>
   <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 backdrop-blur px-6 py-3 rounded-xl shadow-lg text-center w-[90%] max-w-sm pointer-events-none">
     <div id="map-topic-title" class="text-xs text-gray-500 uppercase tracking-wide mb-1">Загрузка...</div>
     <div id="map-question" class="text-xl font-bold text-blue-900">...</div>
@@ -181,7 +184,6 @@
 </div>
 <div id="screen-task9-menu" class="screen">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-geo-menu')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">🏭 Задание 9</h1>
     <div class="flex flex-col">
       <button onclick="openRefMenu()" class="menu-card border-l-4 border-l-yellow-500">
@@ -204,7 +206,6 @@
 </div>
 <div id="screen-task9-ref" class="screen p-4">
   <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <div class="flex gap-2 mb-6">
       <button onclick="switchRefTab('russia')" id="btn-ref-ru" class="flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
       <button onclick="switchRefTab('world')" id="btn-ref-world" class="flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
@@ -214,8 +215,7 @@
 </div>
 <div id="screen-task9-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
-    <div class="flex justify-between items-center mb-4">
-      <button onclick="showScreen('screen-task9-menu')" class="text-blue-600 font-bold hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <div class="flex justify-end items-center mb-4">
       <div class="flex gap-2">
         <button onclick="startQ9Quiz('russia')" id="btn-q9-ru" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
         <button onclick="startQ9Quiz('world')" id="btn-q9-world" class="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer">🌍 Мир</button>
@@ -235,7 +235,6 @@
 <div id="screen-geo-industry-map" class="screen">
   <div id="map-industries"></div>
   <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
-    <button onclick="showScreen('screen-task9-menu')" class="bg-white text-gray-800 px-4 py-2 rounded-full font-bold shadow-lg text-sm border-none cursor-pointer self-start">← Назад</button>
     <div class="bg-white/95 backdrop-blur p-4 rounded-xl shadow-lg border border-gray-200">
       <div class="flex gap-2 mb-3">
         <button onclick="switchIndRegion('russia')" id="btn-ind-ru" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer">🇷🇺 Россия</button>
@@ -249,7 +248,6 @@
 </div>
 <div id="screen-task12-menu" class="screen">
   <div class="w-full max-w-md">
-    <button onclick="showScreen('screen-geo-menu')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">📖 Задание 12</h1>
     <div class="flex flex-col">
       <button onclick="openTask12Ref()" class="menu-card border-l-4 border-l-purple-500">
@@ -267,15 +265,13 @@
 </div>
 <div id="screen-task12-ref" class="screen p-4">
   <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-task12-menu')" class="text-blue-600 font-bold mb-4 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
     <h1 class="text-xl font-bold text-gray-800 mb-6">Термины и определения</h1>
     <div id="t12-ref-content" class="space-y-4 pb-10"></div>
   </div>
 </div>
 <div id="screen-task12-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
-    <div class="flex justify-between items-center mb-4">
-      <button onclick="showScreen('screen-task12-menu')" class="text-blue-600 font-bold hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
+    <div class="flex justify-end items-center mb-4">
       <div class="text-sm font-bold text-gray-600">Вопрос <span id="t12-q-num">1</span></div>
     </div>
     <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden">
@@ -288,34 +284,36 @@
     <button id="t12-btn-next" onclick="nextTask12Q()" class="w-full bg-pink-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
   </div>
 </div>
-<div id="screen-stats" class="screen p-4">
-  <div class="max-w-2xl mx-auto">
-    <button onclick="showScreen('screen-main')" class="text-blue-600 font-bold mb-6 inline-block hover:underline bg-transparent border-none cursor-pointer">← Назад</button>
-    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center mt-4">🏆 Рейтинг отсталого</h1>
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">✍️ Итоговое сочинение</h2>
-      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-lit-correct">0</span></div>
-      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-lit-wrong">0</span></div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🗺️ Задание 4 (Карты)</h2>
-      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-map-correct">0</span></div>
-      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-map-wrong">0</span></div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🏭 Задание 9 (Отрасли)</h2>
-      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-q9-correct">0</span></div>
-      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-q9-wrong">0</span></div>
-    </div>
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">📖 Задание 12 (Термины)</h2>
-      <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl" id="stat-q12-correct">0</span></div>
-      <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl" id="stat-q12-wrong">0</span></div>
-    </div>
-    <button onclick="resetUnifiedStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">Сбросить всю статистику</button>
+<div id="screen-rus-menu" class="screen p-4">
+  <div class="max-w-md mx-auto text-center">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4 mt-8">📖 Русский язык</h1>
+    <p class="text-gray-600 mb-6">Данные для этого раздела пока не добавлены.</p>
+    <p class="text-gray-500 text-sm mb-6">Спросите Нейротёму — он поможет с любым заданием!</p>
+    <button onclick="toggleNeuroPanel()" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-full font-bold text-sm border border-blue-300 cursor-pointer">🧠 Спросить Нейротёму</button>
   </div>
 </div>
-<button id="neuro-fab" onclick="toggleNeuroPanel()" class="fixed bottom-6 right-6 z-[2500] bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg flex items-center justify-center text-2xl transition" title="Нейротёма">🧠</button>
+<div id="screen-stats" class="screen p-4">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center mt-4">🏆 Рейтинг отсталого</h1>
+    <div id="stats-subjects" class="space-y-4">
+      <button onclick="openStatsSubject('lit')" class="menu-card border-l-4 border-l-fuchsia-500">
+        <h2 class="text-lg font-bold text-gray-800">✍️ Итоговое сочинение</h2>
+      </button>
+      <button onclick="openStatsSubject('geo')" class="menu-card border-l-4 border-l-blue-500">
+        <h2 class="text-lg font-bold text-gray-800">🌍 География ЕГЭ</h2>
+      </button>
+      <button onclick="openStatsSubject('rus')" class="menu-card border-l-4 border-l-red-500">
+        <h2 class="text-lg font-bold text-gray-800">📖 Русский язык</h2>
+      </button>
+      <button onclick="resetUnifiedStats()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition border border-red-200 mt-4">Сбросить всю статистику</button>
+    </div>
+    <div id="stats-details" class="hidden">
+      <button onclick="closeStatsDetails()" class="text-blue-600 font-bold mb-4 hover:underline bg-transparent border-none cursor-pointer">← К предметам</button>
+      <h2 id="stats-details-title" class="text-xl font-bold text-gray-800 mb-4"></h2>
+      <div id="stats-details-content"></div>
+    </div>
+  </div>
+</div>
 <div id="neuro-panel" class="hidden fixed bottom-24 right-6 z-[2500] w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 flex-col overflow-hidden" style="max-height: 70vh;">
   <div class="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
     <div class="font-semibold flex items-center gap-2"><span>🧠</span> Нейротёма</div>
@@ -339,17 +337,44 @@
     <button id="neuro-send" onclick="sendNeuroMessage()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 py-2 text-sm font-medium">➤</button>
   </div>
 </div><script>
-function showScreen(id) {
+let screenStack = [];
+function showScreen(id, push = true) {
+  const current = document.querySelector('.screen.active');
+  if (current && current.id === id) {
+    if (id === 'screen-stats') {
+      document.getElementById('stats-subjects').classList.remove('hidden');
+      document.getElementById('stats-details').classList.add('hidden');
+    }
+    return;
+  }
+  if (push && current && id !== 'screen-main' && id !== 'screen-stats') {
+    screenStack.push(current.id);
+  }
+  if (id === 'screen-main' || id === 'screen-stats') {
+    screenStack = [];
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
   if (target) {
     target.classList.add('active');
+    if (id === 'screen-main' || id === 'screen-stats') {
+      document.body.classList.remove('in-task');
+    } else {
+      document.body.classList.add('in-task');
+    }
     if (id === 'screen-task4-play' && map) setTimeout(() => map.invalidateSize(), 250);
     if (id === 'screen-geo-industry-map' && indMap) setTimeout(() => indMap.invalidateSize(), 250);
   }
 }
+function goBack() {
+  if (screenStack.length > 0) {
+    const prev = screenStack.pop();
+    showScreen(prev, false);
+  } else {
+    showScreen('screen-main', false);
+  }
+}
 
-// ===== ЕДИНАЯ СТАТИСТИКА (Рейтинг отсталого) =====
 let stats = { litCorrect: 0, litWrong: 0, mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0, q12Correct: 0, q12Wrong: 0 };
 function loadStats() {
   try {
@@ -361,27 +386,54 @@ function loadStats() {
   } catch(e) {}
 }
 function saveStats() { localStorage.setItem('ege_unified_stats', JSON.stringify(stats)); }
-function updateStatsDisplay() {
-  document.getElementById('stat-lit-correct').textContent = stats.litCorrect;
-  document.getElementById('stat-lit-wrong').textContent = stats.litWrong;
-  document.getElementById('stat-map-correct').textContent = stats.mapCorrect;
-  document.getElementById('stat-map-wrong').textContent = stats.mapWrong;
-  document.getElementById('stat-q9-correct').textContent = stats.q9Correct;
-  document.getElementById('stat-q9-wrong').textContent = stats.q9Wrong;
-  document.getElementById('stat-q12-correct').textContent = stats.q12Correct;
-  document.getElementById('stat-q12-wrong').textContent = stats.q12Wrong;
+
+function openUnifiedStats() {
+  loadStats();
+  document.getElementById('stats-subjects').classList.remove('hidden');
+  document.getElementById('stats-details').classList.add('hidden');
+  showScreen('screen-stats');
 }
-function openUnifiedStats() { loadStats(); updateStatsDisplay(); showScreen('screen-stats'); }
+function openStatsSubject(subject) {
+  document.getElementById('stats-subjects').classList.add('hidden');
+  document.getElementById('stats-details').classList.remove('hidden');
+  const title = document.getElementById('stats-details-title');
+  const content = document.getElementById('stats-details-content');
+  content.innerHTML = '';
+  if (subject === 'lit') {
+    title.textContent = '✍️ Итоговое сочинение';
+    content.innerHTML = statBlock('Тренажёр', stats.litCorrect, stats.litWrong);
+  } else if (subject === 'geo') {
+    title.textContent = '🌍 География ЕГЭ';
+    content.innerHTML =
+      statBlock('Задание 4 (Карты)', stats.mapCorrect, stats.mapWrong) +
+      statBlock('Задание 9 (Отрасли)', stats.q9Correct, stats.q9Wrong) +
+      statBlock('Задание 12 (Термины)', stats.q12Correct, stats.q12Wrong);
+  } else if (subject === 'rus') {
+    title.textContent = '📖 Русский язык';
+    content.innerHTML = '<p class="text-gray-500 text-center py-8">Статистика появится после добавления раздела.</p>';
+  }
+}
+function statBlock(name, correct, wrong) {
+  return `<div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">${name}</h3>
+    <div class="flex justify-between items-center mb-2"><span class="text-sm text-gray-600">Правильные ответы:</span><span class="text-green-600 font-bold text-xl">${correct}</span></div>
+    <div class="flex justify-between items-center"><span class="text-sm text-gray-600">Ошибки:</span><span class="text-red-600 font-bold text-xl">${wrong}</span></div>
+  </div>`;
+}
+function closeStatsDetails() {
+  document.getElementById('stats-details').classList.add('hidden');
+  document.getElementById('stats-subjects').classList.remove('hidden');
+}
 function resetUnifiedStats() {
   if (confirm('Точно сбросить всю статистику?')) {
     stats = { litCorrect: 0, litWrong: 0, mapCorrect: 0, mapWrong: 0, q9Correct: 0, q9Wrong: 0, q12Correct: 0, q12Wrong: 0 };
-    saveStats(); updateStatsDisplay();
+    saveStats();
+    document.getElementById('stats-details').classList.add('hidden');
+    document.getElementById('stats-subjects').classList.remove('hidden');
   }
 }
 
-// ===== ЛИТЕРАТУРА (Итоговое сочинение) =====
 let currentQuizPool = [], currentQuestion = null, qNumber = 1, selectedOptions = new Set();
-
 function startQuiz(section) {
   currentQuizPool = section === 'all' ? [...DB] : DB.filter(q => q.section === section);
   currentQuizPool.sort(() => Math.random() - 0.5);
@@ -390,7 +442,6 @@ function startQuiz(section) {
   showScreen('screen-quiz-play');
   nextQuestion();
 }
-
 function nextQuestion() {
   if (currentQuizPool.length === 0) {
     alert('Вы прошли все темы из этого раздела! Возвращаемся в меню.');
@@ -415,7 +466,6 @@ function nextQuestion() {
   });
   document.getElementById('q-num').textContent = qNumber++;
 }
-
 function toggleOption(opt, btn) {
   if (btn.disabled) return;
   if (selectedOptions.has(opt)) {
@@ -429,7 +479,6 @@ function toggleOption(opt, btn) {
   }
   document.getElementById('btn-check').classList.toggle('hidden', selectedOptions.size !== 2);
 }
-
 function checkAnswers() {
   document.querySelectorAll('#options-container .option-btn').forEach(btn => {
     btn.disabled = true;
@@ -455,7 +504,6 @@ function checkAnswers() {
   document.getElementById('btn-next').classList.remove('hidden');
   setTimeout(() => document.getElementById('answer-block').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
-
 function openReference() {
   const container = document.getElementById('ref-content');
   container.innerHTML = '';
@@ -530,20 +578,16 @@ function openReference() {
       "w_straits": { name: "Проливы", items: { "Па-де-Кале": [51, 1.5], "Ла-Манш": [50, -1.5], "Скагеррак": [57, 10], "Босфор": [41.1, 29.1], "Гибралтарский": [36, -5.4], "Магелланов": [-53.5, -70], "Дрейка": [-58, -70], "Торресов": [-10, 142], "Мозамбикский": [-20, 40], "Девисов": [65, -60], "Бассов": [-40, 147], "Кука": [-41, 174], "Дарданеллы": [40, 26], "Каттегат": [56, 11] }}
     }
   }
-};
-
-let map = null;
+};let map = null;
 let mapMarkers = [];
 let mapAvailable = [];
 let mapCurrentQ = null;
 let mapCorrect = 0, mapWrong = 0, mapIsAnswered = false;
 let mapCurrentRegion = 'russia';
-
 function getMapIcon(color = 'blue') {
   const colors = { blue: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png', green: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png', red: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' };
   return L.icon({ iconUrl: colors[color], shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
 }
-
 function switchRegion(region) {
   mapCurrentRegion = region;
   document.getElementById('btn-reg-russia').className = region === 'russia' ? 'flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow border-none cursor-pointer' : 'flex-1 py-3 bg-white text-gray-600 rounded-xl font-bold shadow border-none cursor-pointer';
@@ -558,7 +602,6 @@ function switchRegion(region) {
     grid.appendChild(card);
   }
 }
-
 function startMapTopic(region, topicId) {
   showScreen('screen-task4-play');
   const data = GEO_DATA[region];
@@ -584,7 +627,6 @@ function startMapTopic(region, topicId) {
   }
   nextMapQ();
 }
-
 function nextMapQ() {
   if (mapAvailable.length === 0) {
     document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
@@ -598,7 +640,6 @@ function nextMapQ() {
   document.getElementById('map-rem').textContent = mapAvailable.length;
   mapIsAnswered = false;
 }
-
 function handleMapClick(name, marker, items) {
   if (mapIsAnswered || !mapCurrentQ) return;
   const isCorrect = (name === mapCurrentQ);
@@ -630,7 +671,9 @@ function handleMapClick(name, marker, items) {
   } else {
     document.getElementById('map-question').textContent = '🏁 Викторина завершена!';
   }
-}const T12_DB = [
+}
+
+const T12_DB = [
   { term: "Естественное движение населения", def: "Рождаемость, смертность, естественный прирост/убыль. Число рождений на 1000 жителей. Превышение смертности над рождаемостью." },
   { term: "Урбанизация", def: "Процесс роста городов и увеличения доли городского населения (от слова «город»)." },
   { term: "Миграция населения", def: "Перемещение людей через границу, из села в город, из государства в регион (иммиграция, эмиграция)." },
@@ -640,7 +683,6 @@ function handleMapClick(name, marker, items) {
   { term: "Трудовые ресурсы", def: "Экономически активное население (занятые и безработные), а также миграции в экономику." },
   { term: "Международная экономическая интеграция", def: "Объединение стран для экономических целей." }
 ];
-
 function openTask12Ref() {
   const container = document.getElementById('t12-ref-content');
   container.innerHTML = '';
@@ -653,19 +695,16 @@ function openTask12Ref() {
   });
   showScreen('screen-task12-ref');
 }
-
 let t12CurrentQ = null;
 let t12CurrentOptions = [];
 let t12Answered = false;
 let t12QNum = 1;
-
 function startTask12Quiz() {
   showScreen('screen-task12-play');
   t12QNum = 1;
   document.getElementById('t12-q-num').textContent = t12QNum;
   nextTask12Q();
 }
-
 function nextTask12Q() {
   document.getElementById('t12-btn-next').classList.add('hidden');
   document.getElementById('t12-explanation').classList.add('hidden');
@@ -685,7 +724,6 @@ function nextTask12Q() {
     optContainer.appendChild(btn);
   });
 }
-
 function checkTask12Answer(idx, btn) {
   if (t12Answered) return;
   t12Answered = true;
@@ -714,7 +752,6 @@ function checkTask12Answer(idx, btn) {
   t12QNum++;
   document.getElementById('t12-q-num').textContent = t12QNum;
 }
-
 const FAKE_RU = ["Курская область", "Смоленская область", "Мурманская область", "Республика Карелия", "Тверская область", "Калининградская область", "Псковская область", "Новгородская область", "Республика Коми", "Магаданская область", "Камчатский край", "Чукотский АО", "Республика Тыва", "Тюменская область", "Архангельская область", "Астраханская область", "Оренбургская область", "Курганская область", "Забайкальский край"];
 const FAKE_WORLD = ["Германия", "Франция", "Япония", "Италия", "Испания", "Швеция", "Финляндия", "Швейцария", "Польша", "Чехия", "Великобритания", "Португалия", "Греция", "Норвегия", "Исландия", "Монголия", "Казахстан", "Беларусь", "Украина", "Венгрия"];const QUIZ_DB = {
   russia: [
@@ -792,26 +829,21 @@ const FAKE_WORLD = ["Германия", "Франция", "Япония", "Ит�
     { name: "Производство морских судов", correct: ["Китай", "Республика Корея", "Япония", "Норвегия"] },
     { name: "Производство автомобилей", correct: ["Китай", "США", "Япония", "Германия", "Индия"] }
   ]
-};
-
-function getDistractors(region, correctList) {
+};function getDistractors(region, correctList) {
   const pool = region === 'russia' ? [...FAKE_RU] : [...FAKE_WORLD];
   pool.sort(() => Math.random() - 0.5);
   return pool.filter(item => !correctList.includes(item)).slice(0, 3);
 }
-
 let currentQuizRegion = 'russia';
 let currentIndustry = null;
 let currentOptions = [];
 let selectedOpts = new Set();
 let correctAnswerIndices = new Set();
 let q9Answered = false;
-
 function openRefMenu() {
   showScreen('screen-task9-ref');
   switchRefTab('russia');
 }
-
 function switchRefTab(region) {
   document.getElementById('btn-ref-ru').className = region === 'russia' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   document.getElementById('btn-ref-world').className = region === 'world' ? 'flex-1 py-2 rounded-lg font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-2 rounded-lg font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
@@ -825,19 +857,16 @@ function switchRefTab(region) {
       </div>`;
   });
 }
-
 function startQuizMenu() {
   showScreen('screen-task9-play');
   startQ9Quiz('russia');
 }
-
 function startQ9Quiz(region) {
   currentQuizRegion = region;
   document.getElementById('btn-q9-ru').className = region === 'russia' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   document.getElementById('btn-q9-world').className = region === 'world' ? 'px-3 py-1.5 rounded-lg text-sm font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
   nextQ9();
 }
-
 function nextQ9() {
   document.getElementById('q9-btn-next').classList.add('hidden');
   document.getElementById('q9-explanation').classList.add('hidden');
@@ -868,7 +897,6 @@ function nextQ9() {
     optContainer.appendChild(btn);
   });
 }
-
 function toggleQ9Option(idx, btn) {
   if (q9Answered) return;
   if (selectedOpts.has(idx)) {
@@ -882,7 +910,6 @@ function toggleQ9Option(idx, btn) {
   }
   if (selectedOpts.size === 3) checkQ9();
 }
-
 function checkQ9() {
   q9Answered = true;
   let isAllCorrect = true;
@@ -910,7 +937,8 @@ function checkQ9() {
   saveStats();
   expBox.classList.remove('hidden');
   document.getElementById('q9-btn-next').classList.remove('hidden');
-}const INDUSTRY_ZONES = {
+}
+const INDUSTRY_ZONES = {
   russia: {
     "Нефтяная промышленность": [{ name: "Западная Сибирь", lat: 61, lng: 72, r: 350000 }, { name: "Волго-Урал", lat: 54, lng: 52, r: 250000 }, { name: "Тимано-Печора", lat: 66, lng: 55, r: 200000 }],
     "Газовая промышленность": [{ name: "Ямал", lat: 70, lng: 72, r: 300000 }, { name: "Оренбург/Астрахань", lat: 48, lng: 52, r: 200000 }, { name: "Сахалин", lat: 52, lng: 143, r: 150000 }, { name: "Коми", lat: 64, lng: 55, r: 200000 }],
@@ -986,12 +1014,9 @@ function checkQ9() {
     "Производство морских судов": [{ name: "Китай", lat: 30, lng: 115, r: 800000 }, { name: "Южная Корея", lat: 36, lng: 128, r: 500000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }],
     "Производство автомобилей": [{ name: "Китай", lat: 35, lng: 110, r: 1000000 }, { name: "США", lat: 40, lng: -85, r: 800000 }, { name: "Европа", lat: 50, lng: 10, r: 600000 }, { name: "Япония", lat: 36, lng: 138, r: 500000 }]
   }
-};
-
-let indMap = null;
+};let indMap = null;
 let indZones = [];
 let indCurrentRegion = 'russia';
-
 function initIndustryMap() {
   showScreen('screen-geo-industry-map');
   if (!indMap) {
@@ -1010,7 +1035,6 @@ function initIndustryMap() {
   }
   drawZones();
 }
-
 function switchIndRegion(region) {
   indCurrentRegion = region;
   document.getElementById('btn-ind-ru').className = region === 'russia' ? 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow border-none cursor-pointer' : 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-gray-600 shadow border-none cursor-pointer';
@@ -1029,7 +1053,6 @@ function switchIndRegion(region) {
   }
   drawZones();
 }
-
 function drawZones() {
   if (!indMap) return;
   indZones.forEach(z => indMap.removeLayer(z));
@@ -1049,10 +1072,8 @@ function drawZones() {
   });
 }
 
-// ===== НЕЙРОТЁМА (единый ассистент для всего приложения) =====
 let neuroContext = '';
 let neuroImageData = null;
-
 function openNeuroPanel() {
   document.getElementById('neuro-panel').classList.remove('hidden');
   setTimeout(() => document.getElementById('neuro-input').focus(), 100);
@@ -1142,7 +1163,22 @@ document.getElementById('neuro-input').addEventListener('keydown', e => {
     sendNeuroMessage();
   }
 });
+
+function updateCounters() {
+  document.getElementById('count-lit').textContent = DB.length;
+  document.getElementById('count-lit-all').textContent = DB.length;
+  document.getElementById('count-lit-all2').textContent = DB.length;
+  document.getElementById('count-lit-1').textContent = DB.filter(q => q.section === '1').length;
+  document.getElementById('count-lit-2').textContent = DB.filter(q => q.section === '2').length;
+  document.getElementById('count-lit-3').textContent = DB.filter(q => q.section === '3').length;
+  const t4 = Object.keys(GEO_DATA.russia.topics).length + Object.keys(GEO_DATA.world.topics).length;
+  document.getElementById('count-t4').textContent = t4;
+  document.getElementById('count-t9').textContent = QUIZ_DB.russia.length + QUIZ_DB.world.length;
+  document.getElementById('count-t12').textContent = T12_DB.length;
+}
+
 loadStats();
+updateCounters();
 </script>
 </body>
 </html>
