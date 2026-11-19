@@ -338,17 +338,25 @@
 
 <div id="screen-rus-play" class="screen p-4">
   <div class="max-w-2xl mx-auto w-full">
-    <div class="flex justify-end items-center mb-4">
-      <div class="text-sm font-bold text-gray-600">Вопрос <span id="rus-q-num">1</span></div>
+    <div class="flex justify-between items-center mb-4">
+      <div class="text-sm text-gray-500">Осталось: <span id="rus-rem">0</span></div>
+      <div class="text-sm font-bold text-gray-600">Карточка <span id="rus-q-num">1</span></div>
     </div>
-    <div class="bg-white rounded-2xl shadow-lg p-6 relative overflow-hidden">
+    <div id="rus-flashcard" onclick="flipRusCard()" class="cursor-pointer select-none bg-white rounded-2xl shadow-lg p-8 min-h-[260px] flex flex-col items-center justify-center text-center relative overflow-hidden transition hover:shadow-xl">
       <div class="absolute top-0 left-0 h-1 bg-red-500 w-full"></div>
-      <div id="rus-task-label" class="text-xs text-red-600 font-bold uppercase tracking-wider mb-2">Задание</div>
-      <h2 id="rus-prompt" class="text-xl font-bold text-gray-800 mb-6">Загрузка...</h2>
-      <div id="rus-options" class="space-y-3"></div>
-      <div id="rus-explanation" class="mt-5 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg border border-yellow-200 hidden"></div>
+      <div id="rus-task-label" class="text-xs text-red-600 font-bold uppercase tracking-wider mb-4">Задание</div>
+      <div id="rus-card-front" class="text-2xl font-bold text-gray-800 leading-relaxed"></div>
+      <div id="rus-card-back" class="hidden text-2xl font-bold text-green-700 leading-relaxed"></div>
+      <div id="rus-card-hint" class="mt-6 text-xs text-gray-400">👆 Нажми на карточку, чтобы увидеть ответ</div>
     </div>
-    <button id="rus-btn-next" onclick="nextRusQuestion()" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl mt-4 shadow hidden border-none cursor-pointer">Дальше →</button>
+    <div id="rus-answer-buttons" class="grid grid-cols-2 gap-3 mt-4 hidden">
+      <button onclick="markRusCard(false)" class="bg-red-100 hover:bg-red-200 text-red-800 font-bold py-4 rounded-xl border-none cursor-pointer transition">❌ Не знал</button>
+      <button onclick="markRusCard(true)" class="bg-green-100 hover:bg-green-200 text-green-800 font-bold py-4 rounded-xl border-none cursor-pointer transition">✅ Знаю</button>
+    </div>
+    <div id="rus-finished" class="hidden mt-6 text-center">
+      <div class="text-2xl font-bold text-gray-800 mb-2">🏁 Готово!</div>
+      <button onclick="goBack()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-xl border-none cursor-pointer">← В меню</button>
+    </div>
   </div>
 </div>
 
@@ -1618,8 +1626,8 @@ const RUS_TASK12 = [
 ["дремл..щий","дремлЮщий"],["рокоч..щий","рокочУщий"],["плещ..щийся","плещУщийся"],["ищ..щий","ищУщий"],
 ["трепещ..щий","трепещУщий"],["брызж..щий","брызжУщий"],["полощ..щий","полощУщий"],
 ["люб..щий","любЯщий"],["вид..щий","видЯщий"],["слыш..щий","слышАщий"],["дыш..щий","дышАщий"]
-];// ==================== РУССКИЙ ЯЗЫК: ЛОГИКА ====================
-let rusState = { taskId: null, pool: [], current: null, answered: false, qNum: 1, label: '' };
+];// ==================== РУССКИЙ ЯЗЫК: ЛОГИКА (ФЛЕШ-КАРТОЧКИ) ====================
+let rusState = { taskId: null, pool: [], current: null, flipped: false, qNum: 1, seen: 0, total: 0 };
 
 function rusCounts() {
   return {
@@ -1643,118 +1651,72 @@ function updateRusCounts() {
   setText('count-rus-total', c.task4 + c.task5 + c.task9 + c.task10 + c.task11 + c.task12);
 }
 
-function makeAccentOptions(correctWord) {
-  const vowels = 'аеёиоуыэюя';
-  const base = correctWord.toLowerCase();
-  const set = new Set([correctWord]);
-  for (let i = 0; i < base.length; i++) {
-    if (vowels.includes(base[i])) set.add(base.slice(0, i) + base[i].toUpperCase() + base.slice(i + 1));
-  }
-  const others = [...set].filter(v => v !== correctWord).sort(() => Math.random() - 0.5);
-  return [correctWord, ...others.slice(0, 3)].sort(() => Math.random() - 0.5);
-}
-function makeCompletionOptions(correctWord, allWords) {
-  const opts = new Set([correctWord]);
-  const shuffled = [...allWords].filter(w => w !== correctWord).sort(() => Math.random() - 0.5);
-  for (const w of shuffled) { if (opts.size >= 4) break; opts.add(w); }
-  return [...opts].sort(() => Math.random() - 0.5);
-}
-function buildRusQuestion(item) {
-  const { card, sub, all } = item;
-  if (sub === 'choice') return { prompt: card[0], options: [...card[1]].sort(() => Math.random() - 0.5), correct: card[2], type: 'choice' };
-  if (sub === 'accent') {
-    const [prompt, correct] = card;
-    return { prompt, options: makeAccentOptions(correct), correct, type: 'accent' };
-  }
-  const [prompt, correct] = card;
-  return { prompt, options: makeCompletionOptions(correct, all), correct, type: 'completion' };
-}
-
 function startRusTask(taskId) {
   let pool = [], label = '';
-  if (taskId === 'task4') { pool = RUS_TASK4.map(c => ({ card: c, sub: 'accent' })); label = 'Задание 4 · Орфоэпия'; }
-  else if (taskId === 'task5') { pool = RUS_TASK5.map(c => ({ card: c, sub: 'choice' })); label = 'Задание 5 · Паронимы'; }
+  if (taskId === 'task4') { pool = RUS_TASK4.map(c => ({ front: c[0], back: c[1] })); label = 'Задание 4 · Орфоэпия'; }
+  else if (taskId === 'task5') { pool = RUS_TASK5.map(c => ({ front: c[0], back: c[2] })); label = 'Задание 5 · Паронимы'; }
   else if (taskId === 'task9') {
-    pool = [
-      ...RUS_TASK9_WORDS.map(c => ({ card: c, sub: 'completion', all: RUS_TASK9_WORDS.map(x => x[1]) })),
-      ...RUS_TASK9_ROOTS.map(c => ({ card: c, sub: 'completion', all: RUS_TASK9_ROOTS.map(x => x[1]) }))
-    ];
+    pool = [...RUS_TASK9_WORDS, ...RUS_TASK9_ROOTS].map(c => ({ front: c[0], back: c[1] }));
     label = 'Задание 9 · Словарные слова и корни';
   }
   else if (taskId === 'task10') {
-    pool = [
-      ...RUS_TASK10_PRE.map(c => ({ card: c, sub: 'completion', all: RUS_TASK10_PRE.map(x => x[1]) })),
-      ...RUS_TASK10_PREFIX.map(c => ({ card: c, sub: 'completion', all: RUS_TASK10_PREFIX.map(x => x[1]) }))
-    ];
+    pool = [...RUS_TASK10_PRE, ...RUS_TASK10_PREFIX].map(c => ({ front: c[0], back: c[1] }));
     label = 'Задание 10 · Приставки';
   }
   else if (taskId === 'task11') {
     pool = [
-      ...RUS_TASK11_RULES.map(c => ({ card: c, sub: 'choice' })),
-      ...RUS_TASK11_WORDS.map(c => ({ card: c, sub: 'completion', all: RUS_TASK11_WORDS.map(x => x[1]) }))
+      ...RUS_TASK11_RULES.map(c => ({ front: c[0], back: c[2] })),
+      ...RUS_TASK11_WORDS.map(c => ({ front: c[0], back: c[1] }))
     ];
     label = 'Задание 11 · Суффиксы';
   }
-  else if (taskId === 'task12') { pool = RUS_TASK12.map(c => ({ card: c, sub: 'completion', all: RUS_TASK12.map(x => x[1]) })); label = 'Задание 12 · Окончания'; }
+  else if (taskId === 'task12') { pool = RUS_TASK12.map(c => ({ front: c[0], back: c[1] })); label = 'Задание 12 · Окончания'; }
   pool.sort(() => Math.random() - 0.5);
-  rusState = { taskId, pool, current: null, answered: false, qNum: 1, label };
+  rusState = { taskId, pool, current: null, flipped: false, qNum: 1, seen: 0, total: pool.length };
   showScreen('screen-rus-play');
   document.getElementById('rus-task-label').textContent = label;
-  nextRusQuestion();
+  nextRusCard();
 }
-function nextRusQuestion() {
+
+function nextRusCard() {
+  document.getElementById('rus-finished').classList.add('hidden');
+  document.getElementById('rus-flashcard').classList.remove('hidden');
   if (rusState.pool.length === 0) {
-    document.getElementById('rus-prompt').textContent = '🏁 Тренажёр завершён!';
-    document.getElementById('rus-options').innerHTML = '';
-    document.getElementById('rus-btn-next').classList.add('hidden');
-    document.getElementById('rus-explanation').classList.add('hidden');
+    document.getElementById('rus-flashcard').classList.add('hidden');
+    document.getElementById('rus-finished').classList.remove('hidden');
+    document.getElementById('rus-answer-buttons').classList.add('hidden');
     return;
   }
-  rusState.answered = false;
-  const item = rusState.pool.pop();
-  const q = buildRusQuestion(item);
-  rusState.current = q;
-  document.getElementById('rus-q-num').textContent = rusState.qNum++;
-  document.getElementById('rus-prompt').textContent = q.prompt;
-  document.getElementById('rus-explanation').classList.add('hidden');
-  document.getElementById('rus-btn-next').classList.add('hidden');
-  const container = document.getElementById('rus-options');
-  container.innerHTML = '';
-  q.options.forEach((opt, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'option-btn w-full text-left px-4 py-3 rounded-xl font-medium text-gray-700 bg-white mb-2 cursor-pointer transition';
-    btn.innerHTML = `<span class="inline-block w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-center text-sm leading-6 mr-2">${idx + 1}</span> ${opt}`;
-    btn.onclick = () => checkRusAnswer(btn, opt);
-    container.appendChild(btn);
-  });
+  rusState.flipped = false;
+  rusState.current = rusState.pool.pop();
+  rusState.qNum = rusState.seen + 1;
+  document.getElementById('rus-q-num').textContent = rusState.qNum;
+  document.getElementById('rus-rem').textContent = rusState.pool.length;
+  document.getElementById('rus-card-front').textContent = rusState.current.front;
+  document.getElementById('rus-card-front').classList.remove('hidden');
+  document.getElementById('rus-card-back').classList.add('hidden');
+  document.getElementById('rus-card-back').textContent = rusState.current.back;
+  document.getElementById('rus-card-hint').classList.remove('hidden');
+  document.getElementById('rus-answer-buttons').classList.add('hidden');
 }
-function checkRusAnswer(btn, chosen) {
-  if (rusState.answered) return;
-  rusState.answered = true;
-  const q = rusState.current;
-  const isCorrect = chosen === q.correct;
+
+function flipRusCard() {
+  if (rusState.flipped || !rusState.current) return;
+  rusState.flipped = true;
+  document.getElementById('rus-card-front').classList.add('hidden');
+  document.getElementById('rus-card-back').classList.remove('hidden');
+  document.getElementById('rus-card-hint').classList.add('hidden');
+  document.getElementById('rus-answer-buttons').classList.remove('hidden');
+}
+
+function markRusCard(known) {
+  if (!rusState.flipped) return;
   const statKey = 'rus' + rusState.taskId.replace('task', '');
-  document.querySelectorAll('#rus-options .option-btn').forEach(b => {
-    b.disabled = true;
-    const txt = b.textContent.replace(/^\d+\s*/, '').trim();
-    if (txt === q.correct) b.classList.add('correct');
-    else if (b === btn) b.classList.add('wrong');
-  });
-  if (isCorrect) stats[statKey + 'Correct'] = (stats[statKey + 'Correct'] || 0) + 1;
+  if (known) stats[statKey + 'Correct'] = (stats[statKey + 'Correct'] || 0) + 1;
   else stats[statKey + 'Wrong'] = (stats[statKey + 'Wrong'] || 0) + 1;
   saveStats();
-  const exp = document.getElementById('rus-explanation');
-  exp.classList.remove('hidden');
-  if (isCorrect) {
-    exp.innerHTML = '<strong>✅ Верно!</strong>';
-    exp.className = 'mt-5 p-3 bg-green-50 text-green-800 text-sm rounded-lg border border-green-200';
-  } else {
-    exp.innerHTML = `<strong>❌ Ошибка.</strong> Правильный ответ: <b>${q.correct}</b>`;
-    exp.className = 'mt-5 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-200';
-  }
-  const nextBtn = document.getElementById('rus-btn-next');
-  nextBtn.classList.remove('hidden');
-  nextBtn.textContent = rusState.pool.length > 0 ? 'Дальше →' : 'Завершить';
+  rusState.seen++;
+  nextRusCard();
 }
 
 // ==================== НЕЙРОТЁМА ====================
